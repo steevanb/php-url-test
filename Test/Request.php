@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace steevanb\PhpUrlTest\Test;
 
 class Request
@@ -15,9 +17,6 @@ class Request
 
     /** @var string[] */
     protected $headers = [];
-
-    /** @var bool */
-    protected $allowRedirect = false;
 
     /** @var string */
     protected $userAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36';

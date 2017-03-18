@@ -1,9 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace steevanb\PhpUrlTest\Test;
 
 class ExpectedResponse
 {
+    /** @var ?int */
+    protected $url;
+
     /** @var ?int */
     protected $code;
 
@@ -16,9 +21,6 @@ class ExpectedResponse
     /** @var ?string */
     protected $contentType;
 
-    /** @var ?int */
-    protected $url;
-
     /** @var string[] */
     protected $headers = [];
 
@@ -30,6 +32,18 @@ class ExpectedResponse
 
     /** @var ?int */
     protected $bodySize;
+
+    public function setUrl(?string $url): self
+    {
+        $this->url = $url;
+
+        return $this;
+    }
+
+    public function getUrl(): ?string
+    {
+        return $this->url;
+    }
 
     public function setCode(?int $code): self
     {
@@ -79,18 +93,6 @@ class ExpectedResponse
         return $this->contentType;
     }
 
-    public function setUrl(?string $url): self
-    {
-        $this->url = $url;
-
-        return $this;
-    }
-
-    public function getUrl(): ?string
-    {
-        return $this->url;
-    }
-
     public function setHeaders(?array $headers): self
     {
         $this->headers = $headers;
@@ -127,14 +129,14 @@ class ExpectedResponse
         return $this->body;
     }
 
-    public function setBodySize(?string $bodySize): self
+    public function setBodySize(?int $bodySize): self
     {
         $this->bodySize = $bodySize;
 
         return $this;
     }
 
-    public function getBodySize(): ?string
+    public function getBodySize(): ?int
     {
         return $this->bodySize;
     }

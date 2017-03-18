@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace steevanb\PhpUrlTest\Test;
 
 class Response
@@ -85,19 +87,6 @@ class Response
         $this->errorMessage = $errorMessage;
     }
 
-    protected function defineHeaders(string $header): self
-    {
-        foreach (explode("\r\n", substr($header, stripos($header, "\r\n"))) as $line) {
-            [$name, $value] = explode(": ", $line);
-            if ($name == null) {
-                continue;
-            }
-            $this->headers[$name] = $value;
-        }
-
-        return $this;
-    }
-
     public function getCode(): ?int
     {
         return $this->code;
@@ -135,7 +124,7 @@ class Response
 
     public function getTime(): ?int
     {
-        return $this->time;
+        return intval($this->time);
     }
 
     public function getRedirectCount(): ?int
@@ -156,6 +145,11 @@ class Response
     public function getHeaders(): array
     {
         return $this->headers;
+    }
+
+    public function getHeader(string $name): ?string
+    {
+        return $this->getHeaders()[$name] ?? null;
     }
 
     public function getHeaderSize(): ?int
@@ -181,5 +175,21 @@ class Response
     public function getErrorMessage(): ?string
     {
         return $this->errorMessage;
+    }
+
+    protected function defineHeaders(string $header): self
+    {
+        foreach (explode("\r\n", substr($header, stripos($header, "\r\n"))) as $line) {
+            if (empty($line)) {
+                continue;
+            }
+            [$name, $value] = explode(": ", $line);
+            if ($name == null) {
+                continue;
+            }
+            $this->headers[$name] = $value;
+        }
+
+        return $this;
     }
 }

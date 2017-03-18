@@ -1,13 +1,11 @@
-config:
-    timeout: 30
-    redirect:
-        allow: true
-        min: 0
-        max: 0
-        count: 0
-
+timeout: 30
+redirect:
+    allow: true
+    min: 0
+    max: 0
+    count: 0
 request:
-    url23: http://localhost
+    url: http://localhost
     port: 80
     method: GET
     headers:
@@ -19,15 +17,14 @@ request:
             field: foo
             field2: bar
     referer: http://localhost/toto
-
 expectedResponse:
     code: 200
     numConnects: 1
-    size: 500
+    size: 850
     contentType: text/html
-    url: http://localhost
+    url23: http://localhost/
     headers:
         x-toto: true
-    headerSize: 50
+    headerSize: 238
     body: '@body.html'
-    bodySize: 450
+    bodySize: 612

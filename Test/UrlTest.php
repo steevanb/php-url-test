@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace steevanb\PhpUrlTest\Test;
 
 use Symfony\Component\Yaml\Yaml;
@@ -30,6 +32,9 @@ class UrlTest
     /** @var ?int */
     protected $redirectCount;
 
+    /** @var ?bool */
+    protected $isValid;
+
     public static function createFromYaml(string $yaml): UrlTest
     {
         if (is_readable($yaml) === false) {
@@ -37,16 +42,34 @@ class UrlTest
         }
 
         $config = Yaml::parse(file_get_contents($yaml));
-        $return = (new static())
-            ->setTimeout($config['config']['timeout'] ?? 30)
-            ->setAllowRedirect($config['config']['redirect']['allow'] ?? false)
-            ->setRedirectMin($config['config']['redirect']['min'] ?? false)
-            ->setRedirectMax($config['config']['redirect']['max'] ?? false)
-            ->setRedirectCount($config['config']['redirect']['count'] ?? false);
+        $return = (new UrlTest())
+            ->setTimeout($config['timeout'] ?? 30)
+            ->setAllowRedirect($config['redirect']['allow'] ?? false)
+            ->setRedirectMin($config['redirect']['min'] ?? null)
+            ->setRedirectMax($config['redirect']['max'] ?? null)
+            ->setRedirectCount($config['redirect']['count'] ?? null);
 
         $return
             ->getRequest()
-            ->setUrl($config['request']['url']);
+            ->setUrl($config['request']['url'])
+            ->setPort($config['request']['port'] ?? $return->getRequest()->getPort())
+            ->setMethod($config['request']['method'] ?? $return->getRequest()->getMethod())
+            ->setHeaders($config['request']['headers'] ?? [])
+            ->setUserAgent($config['request']['userAgent'] ?? $return->getRequest()->getUserAgent())
+            ->setPostFields($config['request']['postFields'] ?? [])
+            ->setReferer($config['request']['referer'] ?? null);
+
+        $return
+            ->getExpectedResponse()
+            ->setCode($config['expectedResponse']['code'] ?? null)
+            ->setNumConnects($config['expectedResponse']['numConnects'] ?? null)
+            ->setSize($config['expectedResponse']['size'] ?? null)
+            ->setContentType($config['expectedResponse']['contentType'] ?? null)
+            ->setUrl($config['expectedResponse']['url'] ?? null)
+            ->setHeaders($config['expectedResponse']['headers'] ?? null)
+            ->setHeaderSize($config['expectedResponse']['headerSize'] ?? null)
+            ->setBody($config['expectedResponse']['body'] ?? null)
+            ->setBodySize($config['expectedResponse']['bodySize'] ?? null);
 
         return $return;
     }
@@ -133,7 +156,7 @@ class UrlTest
         return $this->timeout;
     }
 
-    public function execute()
+    public function execute(): self
     {
         $curl = curl_init();
         curl_setopt_array($curl, [
@@ -144,8 +167,8 @@ class UrlTest
             CURLOPT_HEADER => count($this->getRequest()->getHeaders()) > 0,
             CURLOPT_HTTPHEADER => $this->getRequest()->getHeaders(),
             CURLOPT_REFERER => $this->getRequest()->getReferer(),
-            CURLOPT_POSTFIELDS => $this->getRequest()->getPostFields(),
-            CURLOPT_FOLLOWLOCATION => true,
+//            CURLOPT_POSTFIELDS => $this->getRequest()->getPostFields(),
+            CURLOPT_FOLLOWLOCATION => $this->isAllowRedirect(),
             CURLOPT_TIMEOUT => $this->getTimeout(),
             CURLOPT_USERAGENT => $this->getRequest()->getUserAgent()
         ]);
@@ -163,5 +186,53 @@ class UrlTest
         } else {
             $this->response = new Response($curl, $response);
         }
+
+        return $this;
+    }
+
+    public function isValid(): bool
+    {
+        if ($this->getResponse() instanceof Response === false) {
+            throw new \Exception('You must call execute() before isValid().');
+        }
+
+        if ($this->isValid === null) {
+            $this->isValid = true;
+            $this->compare($this->getExpectedResponse()->getUrl(), $this->getResponse()->getUrl());
+            $this->compare($this->getExpectedResponse()->getCode(), $this->getResponse()->getCode());
+            $this->compare($this->getExpectedResponse()->getNumConnects(), $this->getResponse()->getNumConnects());
+            $this->compare($this->getExpectedResponse()->getSize(), $this->getResponse()->getSize());
+            $this->compare($this->getExpectedResponse()->getContentType(), $this->getResponse()->getContentType());
+            $this->compare($this->getExpectedResponse()->getHeaderSize(), $this->getResponse()->getHeaderSize());
+            $this->compare($this->getExpectedResponse()->getBody(), $this->getResponse()->getBody());
+            $this->compare($this->getExpectedResponse()->getBodySize(), $this->getResponse()->getBodySize());
+            if ($this->isAllowRedirect() === false && $this->getResponse()->getCode() === 302) {
+                $this->isValid = false;
+            } elseif ($this->isAllowRedirect()) {
+                $this->compare($this->getRedirectCount(), $this->getResponse()->getRedirectCount());
+                if (
+                    (
+                        $this->getRedirectMin() !== null
+                        && $this->getRedirectMin() > $this->getResponse()->getRedirectCount()
+                    ) || (
+                        $this->getRedirectMax() !== null
+                        && $this->getRedirectMax() < $this->getResponse()->getRedirectCount()
+                    )
+                ) {
+                    $this->isValid = false;
+                }
+            }
+        }
+
+        return $this->isValid;
+    }
+
+    protected function compare($expected, $value): self
+    {
+        if ($expected !== null && $expected !== $value) {
+            $this->isValid = false;
+        }
+
+        return $this;
     }
 }
