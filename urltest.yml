@@ -4,8 +4,9 @@ redirect:
     min: 0
     max: 0
     count: 0
+responseBodyTransformer: json
 request:
-    url: http://localhost
+    url: http://localhost5959
     port: 80
     method: GET
     headers:
@@ -26,5 +27,6 @@ expectedResponse:
     headers:
         x-toto: true
     headerSize: 238
-    body: '@body.html'
+    body: <file('body.result')>
     bodySize: 612
+    bodyTransformer: json

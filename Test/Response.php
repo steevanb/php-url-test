@@ -6,6 +6,9 @@ namespace steevanb\PhpUrlTest\Test;
 
 class Response
 {
+    /** @var UrlTest */
+    protected $urlTest;
+
     /** @var ?int */
     protected $code;
 
@@ -58,12 +61,16 @@ class Response
     protected $errorMessage;
 
     public function __construct(
+        UrlTest $urlTest,
         $curl = null,
         ?string $response = null,
+        ?int $time = null,
         ?int $errorCode = null,
         ?string $errorMessage = null
     ) {
+        $this->urlTest = $urlTest;
         if (is_resource($curl)) {
+            $this->time = $time;
             $this->code = curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
             $this->numConnects = curl_getinfo($curl, CURLINFO_NUM_CONNECTS);
             $this->size = strlen($response);
@@ -71,7 +78,6 @@ class Response
             $this->connectTime = curl_getinfo($curl, CURLINFO_CONNECT_TIME);
             $this->preTranferTtime = curl_getinfo($curl, CURLINFO_PRETRANSFER_TIME);
             $this->startTranferTime = curl_getinfo($curl, CURLINFO_STARTTRANSFER_TIME);
-            $this->time = curl_getinfo($curl, CURLINFO_TOTAL_TIME);
             $this->url = curl_getinfo($curl, CURLINFO_EFFECTIVE_URL);
             $this->redirectCount = curl_getinfo($curl, CURLINFO_REDIRECT_COUNT);
             $this->redirectTime = curl_getinfo($curl, CURLINFO_REDIRECT_TIME);
@@ -160,6 +166,11 @@ class Response
     public function getBody(): ?string
     {
         return $this->body;
+    }
+
+    public function getTransformedBody(): ?string
+    {
+        return $this->urlTest->getTransformedBody($this->getBody(), $this->urlTest->getResponseBodyTransformerName());
     }
 
     public function getBodySize(): ?int

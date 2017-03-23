@@ -53,7 +53,7 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
                 $urlTest->getResponse()->getBodySize(),
                 $verbose
             )
-            ->writeBodyDiff($urlTest)
+            ->writeBodyDiff($urlTest, $verbose)
             ->writeRedirectionDiff($urlTest, $verbose)
             ->writeRedirectionCountDiff($urlTest, $verbose)
             ->writeResult($urlTest);
@@ -74,7 +74,7 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
                 $this->writeOkValue('none');
             }
             echo "\n";
-        } elseif ($verbose === ResponseComparatorInterface::VERBOSE_HIGH) {
+        } elseif ($verbose >= ResponseComparatorInterface::VERBOSE_MEDIUM) {
             echo 'Redirection: ';
             echo ($urlTest->getResponse()->getRedirectCount() === 0)
                 ? 'none' :
@@ -116,23 +116,33 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
                 echo $redirectionLabel;
             }
             echo "\n";
-        } elseif ($verbose === ResponseComparatorInterface::VERBOSE_HIGH) {
+        } elseif ($verbose >= ResponseComparatorInterface::VERBOSE_MEDIUM) {
             echo 'Redirections count: ' . $urlTest->getResponse()->getRedirectCount() . "\n";
         }
 
         return $this;
     }
 
-    protected function writeBodyDiff(UrlTest $urlTest): self
+    protected function writeBodyDiff(UrlTest $urlTest, int $verbose): self
     {
         if ($urlTest->getExpectedResponse()->getBody() !== null) {
             echo 'Body: ';
-            if ($urlTest->getExpectedResponse()->getBody() === $urlTest->getResponse()->getBody()) {
+            if (
+                $urlTest->getExpectedResponse()->getTransformedBody() === $urlTest->getResponse()->getTransformedBody()
+            ) {
                 $this->writeOkValue('ok');
             } else {
                 $this->writeBadValue('fail');
             }
             echo "\n";
+            if ($verbose === ResponseComparatorInterface::VERBOSE_HIGH) {
+                if ($urlTest->getExpectedResponse()->getBody() !== $urlTest->getResponse()->getBody()) {
+                    echo 'Expected body: ' . $urlTest->getExpectedResponse()->getBody() . "\n";
+                }
+                echo 'Response body: ' . $urlTest->getResponse()->getBody() . "\n";
+            }
+        } elseif ($verbose === ResponseComparatorInterface::VERBOSE_HIGH) {
+            echo 'Body: ' . $urlTest->getResponse()->getBody();
         }
 
         return $this;
@@ -151,7 +161,7 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
                 $this->writeOkValue($value);
             }
             echo "\n";
-        } elseif ($expectedValue === null && $verbose === ResponseComparatorInterface::VERBOSE_HIGH) {
+        } elseif ($expectedValue === null && $verbose >= ResponseComparatorInterface::VERBOSE_MEDIUM) {
             echo $label . ': ' . $value;
             echo "\n";
         }

@@ -4,8 +4,38 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "c5c3dda5f4fc560e25586b5787e774aa",
+    "content-hash": "bf985f17f22292091e48c1afcfb21c37",
     "packages": [
+        {
+            "name": "steevanb/php-yaml",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/steevanb/php-yaml.git",
+                "reference": "5bd72b19d4d136036bf0d0c9ef1d7e3c28061692"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/steevanb/php-yaml/zipball/5bd72b19d4d136036bf0d0c9ef1d7e3c28061692",
+                "reference": "5bd72b19d4d136036bf0d0c9ef1d7e3c28061692",
+                "shasum": ""
+            },
+            "require": {
+                "symfony/yaml": "^3.1"
+            },
+            "type": "lib",
+            "autoload": {
+                "psr-4": {
+                    "steevanb\\PhpYaml\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Add some features to symfony/yaml",
+            "time": "2017-03-18T22:09:10+00:00"
+        },
         {
             "name": "symfony/yaml",
             "version": "v3.2.6",

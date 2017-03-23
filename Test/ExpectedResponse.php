@@ -6,6 +6,9 @@ namespace steevanb\PhpUrlTest\Test;
 
 class ExpectedResponse
 {
+    /** @var UrlTest */
+    protected $urlTest;
+
     /** @var ?int */
     protected $url;
 
@@ -32,6 +35,17 @@ class ExpectedResponse
 
     /** @var ?int */
     protected $bodySize;
+
+    /** @var ?string */
+    protected $bodyTransformerName;
+
+    /** @var ?string */
+    protected $bodyFileName;
+
+    public function __construct(UrlTest $urlTest)
+    {
+        $this->urlTest = $urlTest;
+    }
 
     public function setUrl(?string $url): self
     {
@@ -129,6 +143,11 @@ class ExpectedResponse
         return $this->body;
     }
 
+    public function getTransformedBody(): ?string
+    {
+        return $this->urlTest->getTransformedBody($this->getBody(), $this->getBodyTransformerName());
+    }
+
     public function setBodySize(?int $bodySize): self
     {
         $this->bodySize = $bodySize;
@@ -139,5 +158,29 @@ class ExpectedResponse
     public function getBodySize(): ?int
     {
         return $this->bodySize;
+    }
+
+    public function setBodyTransformerName(?string $transformer): self
+    {
+        $this->bodyTransformerName = $transformer;
+
+        return $this;
+    }
+
+    public function getBodyTransformerName(): ?string
+    {
+        return $this->bodyTransformerName;
+    }
+
+    public function setBodyFileName(?string $bodyFileName): self
+    {
+        $this->bodyFileName = $bodyFileName;
+
+        return $this;
+    }
+
+    public function getBodyFileName(): ?string
+    {
+        return $this->bodyFileName;
     }
 }

@@ -11,4 +11,4 @@ $urlTest = UrlTest::createFromYaml($argv[1]);
 $urlTest->execute();
 
 $comparator = new \steevanb\PhpUrlTest\ResponseComparator\ConsoleResponseComparator();
-$comparator->compare($urlTest, \steevanb\PhpUrlTest\ResponseComparator\ResponseComparatorInterface::VERBOSE_HIGH);
+$comparator->compare($urlTest, \steevanb\PhpUrlTest\ResponseComparator\ResponseComparatorInterface::VERBOSE_MEDIUM);
