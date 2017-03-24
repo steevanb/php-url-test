@@ -8,7 +8,8 @@
     },
     "require": {
         "php": "^7.1",
-        "steevanb/php-yaml": "^1.0"
+        "steevanb/php-yaml": "^1.0",
+        "symfony/console": "^3.2"
     },
     "repositories": [
         {

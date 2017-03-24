@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace steevanb\PhpUrlTest\Test;
+namespace steevanb\PhpUrlTest\Configuration;
 
-class ExpectedResponse
+class Response
 {
-    /** @var UrlTest */
-    protected $urlTest;
+    /** @var Configuration */
+    protected $configuration;
 
     /** @var ?int */
     protected $url;
@@ -42,9 +42,24 @@ class ExpectedResponse
     /** @var ?string */
     protected $bodyFileName;
 
-    public function __construct(UrlTest $urlTest)
+    /** @var ?int */
+    protected $redirectMin;
+
+    /** @var ?int */
+    protected $redirectMax;
+
+    /** @var ?int */
+    protected $redirectCount;
+
+    /** @var ?string */
+    protected $realResponseBodyTransformerName;
+
+    /** @var ?string */
+    protected $realResponseBodyFileName;
+
+    public function __construct(Configuration $configuration)
     {
-        $this->urlTest = $urlTest;
+        $this->configuration = $configuration;
     }
 
     public function setUrl(?string $url): self
@@ -145,7 +160,10 @@ class ExpectedResponse
 
     public function getTransformedBody(): ?string
     {
-        return $this->urlTest->getTransformedBody($this->getBody(), $this->getBodyTransformerName());
+        return $this
+            ->configuration
+            ->getUrlTest()
+            ->getTransformedBody($this->getBody(), $this->getBodyTransformerName());
     }
 
     public function setBodySize(?int $bodySize): self
@@ -182,5 +200,65 @@ class ExpectedResponse
     public function getBodyFileName(): ?string
     {
         return $this->bodyFileName;
+    }
+
+    public function setRedirectMin(?int $redirectMin): self
+    {
+        $this->redirectMin = $redirectMin;
+
+        return $this;
+    }
+
+    public function getRedirectMin(): ?int
+    {
+        return $this->redirectMin;
+    }
+
+    public function setRedirectMax(?int $redirectMax): self
+    {
+        $this->redirectMax = $redirectMax;
+
+        return $this;
+    }
+
+    public function getRedirectMax(): ?int
+    {
+        return $this->redirectMax;
+    }
+
+    public function setRedirectCount(?int $redirectCount): self
+    {
+        $this->redirectCount = $redirectCount;
+
+        return $this;
+    }
+
+    public function getRedirectCount(): ?int
+    {
+        return $this->redirectCount;
+    }
+
+    public function setRealResponseBodyTransformerName(?string $realResponseBodyTransformerName): self
+    {
+        $this->realResponseBodyTransformerName = $realResponseBodyTransformerName;
+
+        return $this;
+    }
+
+    public function getRealResponseBodyTransformerName(): ?string
+    {
+        return $this->realResponseBodyTransformerName;
+    }
+
+    public function setRealResponseBodyFileName(?string $realResponseBodyFileName): self
+    {
+        $this->realResponseBodyFileName = $realResponseBodyFileName;
+
+        return $this;
+    }
+
+    public function getRealResponseBodyFileName(): ?string
+    {
+        return $this->realResponseBodyFileName;
     }
 }

@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace steevanb\PhpUrlTest\ResponseComparator;
 
-use steevanb\PhpUrlTest\Test\UrlTest;
+use steevanb\PhpUrlTest\UrlTest;
 
 interface ResponseComparatorInterface
 {
-    public const VERBOSE_LIGHT = 1;
-    public const VERBOSE_MEDIUM = 2;
-    public const VERBOSE_HIGH = 3;
-    public function compare(UrlTest $urlTest, int $verbose): ResponseComparatorInterface;
+    public const VERBOSITY_NORMAL = 0;
+    public const VERBOSITY_VERBOSE = 1;
+    public const VERBOSITY_VERY_VERBOSE = 2;
+    public const VERBOSITY_DEBUG = 3;
+
+    public function compare(UrlTest $urlTest, int $verbosity): ResponseComparatorInterface;
 }

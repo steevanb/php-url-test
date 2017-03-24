@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace steevanb\PhpUrlTest\Test;
+namespace steevanb\PhpUrlTest\Configuration;
 
 class Request
 {
@@ -26,6 +26,12 @@ class Request
 
     /** @var ?string */
     protected $referer;
+
+    /** @var int */
+    protected $timeout = 30;
+
+    /** @var bool */
+    protected $allowRedirect = false;
 
     public function setUrl(string $url): self
     {
@@ -123,5 +129,29 @@ class Request
     public function getReferer(): ?string
     {
         return $this->referer;
+    }
+
+    public function setTimeout(int $timeout): self
+    {
+        $this->timeout = $timeout;
+
+        return $this;
+    }
+
+    public function getTimeout(): int
+    {
+        return $this->timeout;
+    }
+
+    public function setAllowRedirect(bool $allowRedirect): self
+    {
+        $this->allowRedirect = $allowRedirect;
+
+        return $this;
+    }
+
+    public function isAllowRedirect(): bool
+    {
+        return $this->allowRedirect;
     }
 }

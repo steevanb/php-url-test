@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace steevanb\PhpUrlTest\Test;
+namespace steevanb\PhpUrlTest;
 
 class Response
 {
@@ -170,7 +170,10 @@ class Response
 
     public function getTransformedBody(): ?string
     {
-        return $this->urlTest->getTransformedBody($this->getBody(), $this->urlTest->getResponseBodyTransformerName());
+        return $this->urlTest->getTransformedBody(
+            $this->getBody(),
+            $this->urlTest->getConfiguration()->getResponse()->getRealResponseBodyTransformerName()
+        );
     }
 
     public function getBodySize(): ?int

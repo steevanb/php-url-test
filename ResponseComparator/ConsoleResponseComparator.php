@@ -4,66 +4,67 @@ declare(strict_types=1);
 
 namespace steevanb\PhpUrlTest\ResponseComparator;
 
-use steevanb\PhpUrlTest\Test\UrlTest;
+use steevanb\PhpUrlTest\UrlTest;
 
 class ConsoleResponseComparator implements ResponseComparatorInterface
 {
-    public function compare(UrlTest $urlTest, int $verbose): ResponseComparatorInterface
+    public function compare(UrlTest $urlTest, int $verbosity): ResponseComparatorInterface
     {
+        $responseConfiguration = $urlTest->getConfiguration()->getResponse();
         $this
             ->writeDiff(
                 'Url',
-                $urlTest->getExpectedResponse()->getUrl(),
+                $responseConfiguration->getUrl(),
                 $urlTest->getResponse()->getUrl(),
-                $verbose
+                $verbosity
             )
             ->writeDiff(
                 'Http code',
-                $urlTest->getExpectedResponse()->getCode(),
+                $responseConfiguration->getCode(),
                 $urlTest->getResponse()->getCode(),
-                $verbose
+                $verbosity
             )
             ->writeDiff(
                 'Connections',
-                $urlTest->getExpectedResponse()->getNumConnects(),
+                $responseConfiguration->getNumConnects(),
                 $urlTest->getResponse()->getNumConnects(),
-                $verbose
+                $verbosity
             )
             ->writeDiff(
                 'Size',
-                $urlTest->getExpectedResponse()->getSize(),
+                $responseConfiguration->getSize(),
                 $urlTest->getResponse()->getSize(),
-                $verbose
+                $verbosity
             )
             ->writeDiff(
                 'Content type',
-                $urlTest->getExpectedResponse()->getContentType(),
+                $responseConfiguration->getContentType(),
                 $urlTest->getResponse()->getContentType(),
-                $verbose
+                $verbosity
             )
             ->writeDiff(
                 'Header size',
-                $urlTest->getExpectedResponse()->getHeaderSize(),
+                $responseConfiguration->getHeaderSize(),
                 $urlTest->getResponse()->getHeaderSize(),
-                $verbose
+                $verbosity
             )
             ->writeDiff(
                 'Body size',
-                $urlTest->getExpectedResponse()->getBodySize(),
+                $responseConfiguration->getBodySize(),
                 $urlTest->getResponse()->getBodySize(),
-                $verbose
+                $verbosity
             )
-            ->writeBodyDiff($urlTest, $verbose)
-            ->writeRedirectionDiff($urlTest, $verbose)
-            ->writeRedirectionCountDiff($urlTest, $verbose)
+            ->writeBodyDiff($urlTest, $verbosity)
+            ->writeRedirectionDiff($urlTest, $verbosity)
+            ->writeRedirectionCountDiff($urlTest, $verbosity)
             ->writeResult($urlTest);
 
         return $this;
     }
 
-    protected function writeRedirectionDiff(UrlTest $urlTest, int $verbose): self
+    protected function writeRedirectionDiff(UrlTest $urlTest, int $verbosity): self
     {
-        if ($urlTest->isAllowRedirect() === false) {
+        if ($urlTest->getConfiguration()->getRequest()->isAllowRedirect() === false) {
             echo 'Redirection: ';
             if ($urlTest->getResponse()->getCode() === 302) {
                 $this->writeExpectedValue('not allowed');
@@ -74,7 +75,7 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
                 $this->writeOkValue('none');
             }
             echo "\n";
-        } elseif ($verbose >= ResponseComparatorInterface::VERBOSE_MEDIUM) {
+        } elseif ($verbosity >= ResponseComparatorInterface::VERBOSITY_VERY_VERBOSE) {
             echo 'Redirection: ';
             echo ($urlTest->getResponse()->getRedirectCount() === 0)
                 ? 'none' :
@@ -85,28 +86,34 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
         return $this;
     }
 
-    protected function writeRedirectionCountDiff(UrlTest $urlTest, int $verbose): self
+    protected function writeRedirectionCountDiff(UrlTest $urlTest, int $verbosity): self
     {
-        if ($urlTest->getRedirectCount() !== null) {
+        $responseConfiguration = $urlTest->getConfiguration()->getResponse();
+        if ($responseConfiguration->getRedirectCount() !== null) {
             $this->writeDiff(
                 'Redirections count',
-                $urlTest->getRedirectCount(),
+                $responseConfiguration->getRedirectCount(),
                 $urlTest->getResponse()->getRedirectCount(),
-                $verbose
+                $verbosity
             );
-        } elseif ($urlTest->getRedirectMin() !== null || $urlTest->getRedirectMax() !== null) {
+        } elseif (
+            $responseConfiguration->getRedirectMin() !== null
+            || $responseConfiguration->getRedirectMax() !== null
+        ) {
             echo 'Redirection count: ';
-            if ($urlTest->getRedirectMin() === null) {
-                $redirectionLabel = 'max ' . $urlTest->getRedirectMax();
-                $isError = $urlTest->getRedirectMax() < $urlTest->getResponse()->getRedirectCount();
-            } elseif ($urlTest->getRedirectMax() === null) {
-                $redirectionLabel = 'min ' . $urlTest->getRedirectMin();
-                $isError = $urlTest->getRedirectMin() > $urlTest->getResponse()->getRedirectCount();
+            if ($responseConfiguration->getRedirectMin() === null) {
+                $redirectionLabel = 'max ' . $responseConfiguration->getRedirectMax();
+                $isError = $responseConfiguration->getRedirectMax() < $urlTest->getResponse()->getRedirectCount();
+            } elseif ($responseConfiguration->getRedirectMax() === null) {
+                $redirectionLabel = 'min ' . $responseConfiguration->getRedirectMin();
+                $isError = $responseConfiguration->getRedirectMin() > $urlTest->getResponse()->getRedirectCount();
             } else {
-                $redirectionLabel = 'between ' . $urlTest->getRedirectMin() . ' and ' . $urlTest->getRedirectMax();
+                $redirectionLabel =
+                    'between ' . $responseConfiguration->getRedirectMin()
+                    . ' and ' . $responseConfiguration->getRedirectMax();
                 $isError =
-                    $urlTest->getRedirectMax() < $urlTest->getResponse()->getRedirectCount()
-                    || $urlTest->getRedirectMin() > $urlTest->getResponse()->getRedirectCount();
+                    $responseConfiguration->getRedirectMax() < $urlTest->getResponse()->getRedirectCount()
+                    || $responseConfiguration->getRedirectMin() > $urlTest->getResponse()->getRedirectCount();
             }
             if ($isError) {
                 $this->writeExpectedValue($redirectionLabel);
@@ -116,39 +123,40 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
                 echo $redirectionLabel;
             }
             echo "\n";
-        } elseif ($verbose >= ResponseComparatorInterface::VERBOSE_MEDIUM) {
+        } elseif ($verbosity >= ResponseComparatorInterface::VERBOSITY_VERY_VERBOSE) {
             echo 'Redirections count: ' . $urlTest->getResponse()->getRedirectCount() . "\n";
         }
 
         return $this;
     }
 
-    protected function writeBodyDiff(UrlTest $urlTest, int $verbose): self
+    protected function writeBodyDiff(UrlTest $urlTest, int $verbosity): self
     {
-        if ($urlTest->getExpectedResponse()->getBody() !== null) {
+        $responseConfiguration = $urlTest->getConfiguration()->getResponse();
+        if ($responseConfiguration->getBody() !== null) {
             echo 'Body: ';
             if (
-                $urlTest->getExpectedResponse()->getTransformedBody() === $urlTest->getResponse()->getTransformedBody()
+                $responseConfiguration->getTransformedBody() === $urlTest->getResponse()->getTransformedBody()
             ) {
                 $this->writeOkValue('ok');
             } else {
                 $this->writeBadValue('fail');
             }
             echo "\n";
-            if ($verbose === ResponseComparatorInterface::VERBOSE_HIGH) {
-                if ($urlTest->getExpectedResponse()->getBody() !== $urlTest->getResponse()->getBody()) {
-                    echo 'Expected body: ' . $urlTest->getExpectedResponse()->getBody() . "\n";
+            if ($verbosity === ResponseComparatorInterface::VERBOSITY_DEBUG) {
+                if ($responseConfiguration->getBody() !== $urlTest->getResponse()->getBody()) {
+                    echo 'Expected body: ' . $responseConfiguration->getBody() . "\n";
                 }
                 echo 'Response body: ' . $urlTest->getResponse()->getBody() . "\n";
             }
-        } elseif ($verbose === ResponseComparatorInterface::VERBOSE_HIGH) {
+        } elseif ($verbosity === ResponseComparatorInterface::VERBOSITY_DEBUG) {
             echo 'Body: ' . $urlTest->getResponse()->getBody();
         }
 
         return $this;
     }
 
-    protected function writeDiff($label, $expectedValue, $value, int $verbose): self
+    protected function writeDiff($label, $expectedValue, $value, int $verbosity): self
     {
         if ($expectedValue !== null) {
             echo $label . ': ';
@@ -161,7 +169,7 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
                 $this->writeOkValue($value);
             }
             echo "\n";
-        } elseif ($expectedValue === null && $verbose >= ResponseComparatorInterface::VERBOSE_MEDIUM) {
+        } elseif ($expectedValue === null && $verbosity >= ResponseComparatorInterface::VERBOSITY_VERY_VERBOSE) {
             echo $label . ': ' . $value;
             echo "\n";
         }

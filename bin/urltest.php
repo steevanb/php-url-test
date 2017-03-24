@@ -3,12 +3,13 @@
 
 declare(strict_types=1);
 
-use steevanb\PhpUrlTest\Test\UrlTest;
+use steevanb\PhpUrlTest\Command\UrlTestCommand;
+use Symfony\Component\Console\Application;
 
-require dirname(__FILE__) . '/../vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 
-$urlTest = UrlTest::createFromYaml($argv[1]);
-$urlTest->execute();
-
-$comparator = new \steevanb\PhpUrlTest\ResponseComparator\ConsoleResponseComparator();
-$comparator->compare($urlTest, \steevanb\PhpUrlTest\ResponseComparator\ResponseComparatorInterface::VERBOSE_MEDIUM);
+$application = new Application('urltest');
+$command = new UrlTestCommand();
+$application->add($command);
+$application->setDefaultCommand($command->getName(), true);
+$application->run();
