@@ -5,18 +5,11 @@ declare(strict_types=1);
 namespace steevanb\PhpUrlTest\Configuration;
 
 use steevanb\PhpUrlTest\UrlTest;
-use steevanb\PhpYaml\Parser;
 
 class Configuration
 {
-    public static function createFromYaml(string $yaml, UrlTest $urlTest): self
+    public static function create(array $config, UrlTest $urlTest): self
     {
-        if (is_readable($yaml) === false) {
-            throw new \Exception('File "' . $yaml . '" does not exist or is not readable.');
-        }
-
-        Parser::registerFileFunction();
-        $config = (new Parser())->parse(file_get_contents($yaml));
         $return = new static($urlTest);
 
         $return
@@ -70,6 +63,7 @@ class Configuration
         $this->urlTest = $urlTest;
         $this->request = new Request();
         $this->response = new Response($this);
+        $urlTest->setConfiguration($this);
     }
 
     public function getUrlTest(): UrlTest

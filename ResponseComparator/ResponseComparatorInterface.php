@@ -13,5 +13,5 @@ interface ResponseComparatorInterface
     public const VERBOSITY_VERY_VERBOSE = 2;
     public const VERBOSITY_DEBUG = 3;
 
-    public function compare(UrlTest $urlTest, int $verbosity): ResponseComparatorInterface;
+    public function compare(UrlTest $urlTest, int $verbosity = self::VERBOSITY_NORMAL): ResponseComparatorInterface;
 }

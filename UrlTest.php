@@ -12,6 +12,9 @@ use steevanb\PhpUrlTest\{
 
 class UrlTest
 {
+    /** @var string */
+    protected $id;
+
     /** @var Configuration */
     protected $configuration;
 
@@ -24,10 +27,16 @@ class UrlTest
     /** @var ResponseBodyTransformerInterface[] */
     protected $responseBodyTransformers = [];
 
-    public function __construct()
+    public function __construct(string $id)
     {
+        $this->id = $id;
         $this->configuration = new Configuration($this);
         $this->addResponseBodyTransformer('json', new JsonResponseBodyTransformer());
+    }
+
+    public function getId(): string
+    {
+        return $this->id;
     }
 
     public function setConfiguration(Configuration $configuration): self

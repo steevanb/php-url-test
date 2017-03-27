@@ -4,39 +4,117 @@ declare(strict_types=1);
 
 namespace steevanb\PhpUrlTest\Command;
 
+use steevanb\PhpUrlTest\ResponseComparator\ResponseComparatorInterface;
+use steevanb\PhpUrlTest\ResponseComparator\ResponseComparatorService;
+use steevanb\PhpUrlTest\UrlTest;
 use Symfony\Component\Console\{
     Command\Command,
+    Helper\ProgressBar,
     Input\InputArgument,
     Input\InputInterface,
+    Input\InputOption,
     Output\OutputInterface
 };
-use steevanb\PhpUrlTest\{
-    Configuration\Configuration,
-    ResponseComparator\ConsoleResponseComparator,
-    ResponseComparator\ResponseComparatorInterface, UrlTest
-};
+use steevanb\PhpUrlTest\UrlTestService;
 
 class UrlTestCommand extends Command
 {
+    /** @var ProgressBar */
+    protected $progressBar;
+
+    public function onProgress()
+    {
+        $this->progressBar->advance();
+    }
+
     protected function configure()
     {
         parent::configure();
 
         $this
             ->setName('urltest')
+            ->addOption('recursive', 'r', InputOption::VALUE_OPTIONAL, 'Set recursive if path is a directory.', 'true')
+            ->addOption(
+                'comparator',
+                'c',
+                InputOption::VALUE_OPTIONAL,
+                'Comparator name to compare response with expected one'
+            )
+            ->addOption(
+                'errorcomparator',
+                'ec',
+                InputOption::VALUE_OPTIONAL,
+                'Comparator name to compare response with expected one when test fail'
+            )
             ->addArgument('path', InputArgument::REQUIRED, 'Configuration file name, or directories separated by ",".');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $urlTest = new UrlTest();
-        $urlTest->setConfiguration(Configuration::createFromYaml($input->getFirstArgument(), $urlTest));
-        $urlTest->execute();
+        $service = new UrlTestService();
 
-        if ($output->getVerbosity() !== OutputInterface::VERBOSITY_QUIET) {
-            $comparator = new ConsoleResponseComparator();
-            $comparator->compare($urlTest, $this->getVerbosity($output));
+        $this->definePath($service, $input->getArgument('path'), $input->getOption('recursive') === 'true');
+
+        $this->progressBar = new ProgressBar($output, $service->countTests());
+        $this->progressBar->setFormat('%current%/%max% [%bar%] %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s%' . "\n");
+        $service->setOnProgressCallback([$this, 'onProgress']);
+        $return = $service->executeTests() === true ? 0 : 1;
+        $this->progressBar->finish();
+
+        $this->compareResponses(
+            $service->getTests(),
+            $input->getOption('comparator'),
+            $input->getOption('errorcomparator'),
+            $output
+        );
+
+        return $return;
+    }
+
+    protected function definePath(UrlTestService $urlTestService, string $path, bool $recursive): self
+    {
+        if (is_dir($path)) {
+            $urlTestService->addTestDirectory($path, $recursive);
+        } elseif (is_file($path)) {
+            $urlTestService->addTestFile($path);
         }
+
+        return $this;
+    }
+
+    protected function getResponseComparatorClassName(string $comparator): string
+    {
+        return substr($comparator, -10) !== 'ResponseComparator'
+            ? 'steevanb\\PhpUrlTest\\ResponseComparator\\' . ucfirst($comparator) . 'ResponseComparator'
+            : $comparator;
+    }
+
+    protected function compareResponses(
+        array $urlTests,
+        ?string $comparator,
+        ?string $errorComparator,
+        OutputInterface $output
+    ): self {
+        $comparatorService = new ResponseComparatorService();
+        if ($comparator !== null) {
+            $className = $this->getResponseComparatorClassName($comparator);
+            $comparatorService
+                ->addComparator($comparator, new $className())
+                ->setDefaultComparatorId($comparator);
+        }
+        if ($errorComparator !== null) {
+            $className = $this->getResponseComparatorClassName($errorComparator);
+            $comparatorService
+                ->addComparator($errorComparator, new $className())
+                ->setDefaultErrorComparatorId($errorComparator);
+        }
+        $verbosity = $this->getVerbosity($output);
+
+        foreach ($urlTests as $urlTest) {
+            $comparatorService->compare($urlTest, $verbosity);
+        }
+
+        return $this;
     }
 
     protected function getVerbosity(OutputInterface $output): int
