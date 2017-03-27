@@ -85,7 +85,7 @@ class UrlTestService
             $urlTest->execute();
 
             if (is_callable($this->getOnProgressCallback())) {
-                call_user_func_array($this->getOnProgressCallback(), [$id, $urlTest]);
+                call_user_func($this->getOnProgressCallback(), $urlTest);
             }
 
             if ($urlTest->isValid() === false) {

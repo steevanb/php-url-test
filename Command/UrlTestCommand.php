@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace steevanb\PhpUrlTest\Command;
 
-use steevanb\PhpUrlTest\ResponseComparator\ResponseComparatorInterface;
-use steevanb\PhpUrlTest\ResponseComparator\ResponseComparatorService;
-use steevanb\PhpUrlTest\UrlTest;
 use Symfony\Component\Console\{
     Command\Command,
     Helper\ProgressBar,
@@ -15,15 +12,32 @@ use Symfony\Component\Console\{
     Input\InputOption,
     Output\OutputInterface
 };
-use steevanb\PhpUrlTest\UrlTestService;
+use steevanb\PhpUrlTest\{
+    ResponseComparator\ResponseComparatorInterface,
+    ResponseComparator\ResponseComparatorService,
+    UrlTest,
+    UrlTestService
+};
 
 class UrlTestCommand extends Command
 {
     /** @var ProgressBar */
     protected $progressBar;
 
-    public function onProgress()
+    /** @var int */
+    protected $urlTestSuccess = 0;
+
+    /** @var int */
+    protected $urlTestFail = 0;
+
+    public function onProgress(UrlTest $urlTest)
     {
+        $urlTest->isValid() ? $this->urlTestSuccess++ : $this->urlTestFail++;
+        $message = "\e[42m\e[1;37m " . $this->urlTestSuccess ." \e[00m";
+        if ($this->urlTestFail > 0) {
+            $message .= " \e[41m\e[1;37m " . $this->urlTestFail ." \e[00m";
+        }
+        $this->progressBar->setMessage($message);
         $this->progressBar->advance();
     }
 
@@ -56,7 +70,11 @@ class UrlTestCommand extends Command
         $this->definePath($service, $input->getArgument('path'), $input->getOption('recursive') === 'true');
 
         $this->progressBar = new ProgressBar($output, $service->countTests());
-        $this->progressBar->setFormat('%current%/%max% [%bar%] %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s%' . "\n");
+        $this->progressBar->setFormat(
+            '[%bar%] %current%/%max% %message% | %elapsed:6s%/%estimated:-6s% | %memory:6s%' . "\n"
+        );
+        $this->progressBar->setMessage("\e[42m\e[1;37m 0 \e[00m");
+        $this->progressBar->start();
         $service->setOnProgressCallback([$this, 'onProgress']);
         $return = $service->executeTests() === true ? 0 : 1;
         $this->progressBar->finish();

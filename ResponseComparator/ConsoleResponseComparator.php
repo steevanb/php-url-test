@@ -13,7 +13,6 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
         int $verbosity = ResponseComparatorInterface::VERBOSITY_NORMAL
     ): ResponseComparatorInterface {
         echo "\n";
-
         if ($verbosity === ResponseComparatorInterface::VERBOSITY_NORMAL) {
             $this->writeResult($urlTest);
             echo ' ';
