@@ -203,7 +203,7 @@ class UrlTest
             CURLOPT_PORT => $request->getPort(),
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_CUSTOMREQUEST => $request->getMethod(),
-            CURLOPT_HEADER => count($request->getHeaders()) > 0,
+            CURLOPT_HEADER => true,
             CURLOPT_HTTPHEADER => $headers,
             CURLOPT_REFERER => $request->getReferer(),
 //            CURLOPT_POSTFIELDS => $this->getRequest()->getPostFields(),

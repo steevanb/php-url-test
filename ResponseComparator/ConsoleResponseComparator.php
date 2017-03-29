@@ -66,6 +66,7 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
                 $urlTest->getResponse()->getHeaderSize(),
                 $verbosity
             )
+            ->writeHeaderDiff($urlTest, $verbosity)
             ->writeDiff(
                 'Body size',
                 $responseConfiguration->getBodySize(),
@@ -155,6 +156,15 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
         return $this;
     }
 
+    protected function writeHeaderDiff(UrlTest $urlTest, int $verbosity): self
+    {
+        if ($verbosity >= ResponseComparatorInterface::VERBOSITY_DEBUG) {
+            echo 'Header: ' . $urlTest->getResponse()->getHeader() . "\n";
+        }
+
+        return $this;
+    }
+
     protected function writeBodyDiff(UrlTest $urlTest, int $verbosity): self
     {
         if ($verbosity >= ResponseComparatorInterface::VERBOSITY_VERBOSE) {
@@ -176,7 +186,7 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
                     echo 'Response body: ' . $urlTest->getResponse()->getBody() . "\n";
                 }
             } elseif ($verbosity === ResponseComparatorInterface::VERBOSITY_DEBUG) {
-                echo 'Body: ' . $urlTest->getResponse()->getBody();
+                echo 'Body: ' . $urlTest->getResponse()->getBody() . "\n";
             }
         }
 
