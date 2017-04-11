@@ -47,6 +47,7 @@ class UrlTestCommand extends Command
 
         $this
             ->setName('urltest')
+            ->addOption('autoload', null, InputOption::VALUE_OPTIONAL, 'Set autoload file name.', null)
             ->addOption('parallel', 'p', InputOption::VALUE_OPTIONAL, 'Set parallel tests number.', 1)
             ->addOption(
                 'comparator',

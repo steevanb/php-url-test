@@ -18,6 +18,9 @@ class UrlTestService
     /** @var int */
     protected $parallelNumber = 1;
 
+    /** @var ?string */
+    protected $binAutoload;
+
     public function addTestDirectory(string $directory, bool $recursive = true): self
     {
         if (substr($directory, -1) !== DIRECTORY_SEPARATOR) {
@@ -40,7 +43,7 @@ class UrlTestService
 
     public function addTestFile(string $fileName): self
     {
-        Parser::registerFileFunction();
+        Parser::registerFileFunction(dirname($fileName));
         foreach ((new Parser())->parse(file_get_contents($fileName)) as $id => $config) {
             $this->addTest($id, $this->createTest($id, $config));
         }
@@ -91,6 +94,18 @@ class UrlTestService
     public function getOnProgressCallback(): ?callable
     {
         return $this->onProgressCallback;
+    }
+
+    public function setBinAutoload(?string $autoload): self
+    {
+        $this->binAutoload = $autoload;
+
+        return $this;
+    }
+
+    public function getBinAutoload(): ?string
+    {
+        return $this->binAutoload;
     }
 
     public function executeTests(): bool
