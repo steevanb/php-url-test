@@ -207,7 +207,7 @@ class Response
                 continue;
             }
             [$name, $value] = explode(": ", $line);
-            if ($name == null) {
+            if ($name === null) {
                 continue;
             }
             $this->headers[$name] = $value;

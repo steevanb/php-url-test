@@ -1,14 +1,51 @@
-[![unstable](https://img.shields.io/badge/unstable-master-red.svg)](https://github.com/steevanb/php-url-test)
+[![version](https://img.shields.io/badge/alpha-0.0.0-red.svg)](https://github.com/steevanb/php-url-test/tree/0.0.0)
+![Lines](https://img.shields.io/badge/code%20lines-2048-green.svg)
+![Total Downloads](https://poser.pugx.org/steevanb/php-url-test/downloads)
+[![SensionLabsInsight](https://img.shields.io/badge/SensionLabsInsight-platinum-brightgreen.svg)](https://insight.sensiolabs.com/projects/3ea1fb58-8abf-4d05-bc99-6e2169b86337/analyses/2)
+[![Scrutinizer](https://scrutinizer-ci.com/g/steevanb/php-url-test/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/steevanb/php-url-test)
 
 php-url-test
 ============
 
 Tests all urls of your application
 
+[Changelog](changelog.md)
+
+Installation
+============
+
+/!\ Keep in mind this is an alpha version /!\
+
+```bash
+composer require "steevanb/php-url-test": "^0.0"
+```
+
+Launch tests
+============
+
+```bash
+# scan all directories to find *.urltest.yml files, --recursive=true or -r=true to do it recursively
+./bin/urltest.php src/
+
+# launche tests in foo.urltest.yml only
+./bin/urltest.php src/Tests/foo.urltest.yml
+
+# use ConsoleResponseComparator to show test comparison, use -v, -vv or -vvv to get more informations
+./bin/urltest.php --comparator=console src/
+
+# use ConsoleResponseComparator to only show fail test comparison, use -v, -vv or -vvv to get more informations
+./bin/urltest.php --errorcomparator=console src/
+```
+
+```bash
+./bin/urltest.php --comparator=console -v src/Tests/foo.urltest.yml
+```
+![Url test](example.jpg)
+
 YAML test file example
 ======================
 
-Only request.url is required.
+Only _request.url_ is required.
 
 ```yaml
 testId:
