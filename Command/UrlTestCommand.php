@@ -47,7 +47,7 @@ class UrlTestCommand extends Command
 
         $this
             ->setName('urltest')
-            ->addOption('recursive', 'r', InputOption::VALUE_OPTIONAL, 'Set recursive if path is a directory.', 'true')
+            ->addOption('parallel', 'p', InputOption::VALUE_OPTIONAL, 'Set parallel tests number.', 1)
             ->addOption(
                 'comparator',
                 'c',
@@ -60,6 +60,8 @@ class UrlTestCommand extends Command
                 InputOption::VALUE_OPTIONAL,
                 'Comparator name to compare response with expected one when test fail'
             )
+            ->addOption('progress', null, InputOption::VALUE_OPTIONAL, 'Show/hide progress bar.', 'true')
+            ->addOption('recursive', 'r', InputOption::VALUE_OPTIONAL, 'Set recursive if path is a directory.', 'true')
             ->addArgument('path', InputArgument::REQUIRED, 'Configuration file name, or directories separated by ",".');
     }
 
@@ -68,23 +70,20 @@ class UrlTestCommand extends Command
         $service = new UrlTestService();
 
         $this->definePath($service, $input->getArgument('path'), $input->getOption('recursive') === 'true');
+        $service->setParallelNumber(intval($input->getOption('parallel')));
 
-        $this->progressBar = new ProgressBar($output, $service->countTests());
-        $this->progressBar->setFormat(
-            '[%bar%] %current%/%max% %message% | %elapsed:6s%/%estimated:-6s% | %memory:6s%' . "\n"
-        );
-        $this->progressBar->setMessage("\e[42m\e[1;37m 0 \e[00m");
-        $this->progressBar->start();
-        $service->setOnProgressCallback([$this, 'onProgress']);
+        $this->initProgressBar($output, $service, $input->getOption('progress') === 'true');
         $return = $service->executeTests() === true ? 0 : 1;
-        $this->progressBar->finish();
+        $this->finishProgressBar();
 
-        $this->compareResponses(
-            $service->getTests(),
-            $input->getOption('comparator'),
-            $input->getOption('errorcomparator'),
-            $output
-        );
+        if ($input->getOption('parallel') <= 1) {
+            $this->compareResponses(
+                $service->getTests(),
+                $input->getOption('comparator'),
+                $input->getOption('errorcomparator'),
+                $output
+            );
+        }
 
         return $return;
     }
@@ -155,5 +154,29 @@ class UrlTestCommand extends Command
         }
 
         return $return;
+    }
+
+    protected function initProgressBar(OutputInterface $output, UrlTestService $service, bool $show): self
+    {
+        if ($show) {
+            $this->progressBar = new ProgressBar($output, $service->countTests());
+            $this->progressBar->setFormat(
+                '[%bar%] %current%/%max% %message% | %elapsed:6s%/%estimated:-6s% | %memory:6s%' . "\n"
+            );
+            $this->progressBar->setMessage("\e[42m\e[1;37m 0 \e[00m");
+            $this->progressBar->start();
+            $service->setOnProgressCallback([$this, 'onProgress']);
+        }
+
+        return $this;
+    }
+
+    protected function finishProgressBar(): self
+    {
+        if ($this->progressBar instanceof ProgressBar) {
+            $this->progressBar->finish();
+        }
+
+        return $this;
     }
 }

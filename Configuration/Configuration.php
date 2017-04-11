@@ -37,6 +37,7 @@ class Configuration
             ->setRedirectMax($configuration['expectedResponse']['redirect']['max'])
             ->setRedirectCount($configuration['expectedResponse']['redirect']['count'])
             ->setHeaders($configuration['expectedResponse']['header']['headers'])
+            ->setUnallowedHeaders($configuration['expectedResponse']['header']['unallowedHeaders'])
             ->setHeaderSize($configuration['expectedResponse']['header']['size'])
             ->setBody($configuration['expectedResponse']['body']['content'])
             ->setBodySize($configuration['expectedResponse']['body']['size'])
@@ -121,6 +122,8 @@ class Configuration
         $expectedResponseHeaderResolver
             ->setDefault('headers', [])
             ->setAllowedTypes('headers', 'array')
+            ->setDefault('unallowedHeaders', [])
+            ->setAllowedTypes('unallowedHeaders', 'array')
             ->setDefault('size', null)
             ->setAllowedTypes('size', ['null', 'int']);
         $data['expectedResponse']['header'] = $expectedResponseHeaderResolver->resolve(

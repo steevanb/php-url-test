@@ -66,7 +66,12 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
                 $urlTest->getResponse()->getHeaderSize(),
                 $verbosity
             )
-            ->writeHeaderDiff($urlTest, $verbosity)
+            ->writeHeadersDiff(
+                $urlTest->getConfiguration()->getResponse()->getHeaders(),
+                $urlTest->getConfiguration()->getResponse()->getUnallowedHeaders(),
+                $urlTest->getResponse()->getHeaders(),
+                $verbosity
+            )
             ->writeDiff(
                 'Body size',
                 $responseConfiguration->getBodySize(),
@@ -156,21 +161,12 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
         return $this;
     }
 
-    protected function writeHeaderDiff(UrlTest $urlTest, int $verbosity): self
-    {
-        if ($verbosity >= ResponseComparatorInterface::VERBOSITY_DEBUG) {
-            echo 'Header: ' . $urlTest->getResponse()->getHeader() . "\n";
-        }
-
-        return $this;
-    }
-
     protected function writeBodyDiff(UrlTest $urlTest, int $verbosity): self
     {
         if ($verbosity >= ResponseComparatorInterface::VERBOSITY_VERBOSE) {
             $responseConfiguration = $urlTest->getConfiguration()->getResponse();
             if ($responseConfiguration->getBody() !== null) {
-                echo 'Body: ';
+                echo 'Body: ' . "\n";
                 if (
                     $responseConfiguration->getTransformedBody() === $urlTest->getResponse()->getTransformedBody()
                 ) {
@@ -181,12 +177,12 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
                 echo "\n";
                 if ($verbosity === ResponseComparatorInterface::VERBOSITY_DEBUG) {
                     if ($responseConfiguration->getBody() !== $urlTest->getResponse()->getBody()) {
-                        echo 'Expected body: ' . $responseConfiguration->getBody() . "\n";
+                        echo 'Expected body: ' . "\n" . $responseConfiguration->getBody() . "\n";
                     }
-                    echo 'Response body: ' . $urlTest->getResponse()->getBody() . "\n";
+                    echo 'Response body: ' . "\n" . $urlTest->getResponse()->getBody() . "\n";
                 }
             } elseif ($verbosity === ResponseComparatorInterface::VERBOSITY_DEBUG) {
-                echo 'Body: ' . $urlTest->getResponse()->getBody() . "\n";
+                echo 'Body: ' . "\n" . $urlTest->getResponse()->getBody() . "\n";
             }
         }
 
@@ -210,6 +206,47 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
             } elseif ($expectedValue === null && $verbosity >= ResponseComparatorInterface::VERBOSITY_VERY_VERBOSE) {
                 echo $label . ': ' . $value;
                 echo "\n";
+            }
+        }
+
+        return $this;
+    }
+
+    protected function writeHeadersDiff(
+        array $allowedHeaders,
+        array $unallowedHeaders,
+        array $responseHeaders,
+        int $verbosity
+    ): self
+    {
+        if ($verbosity >= ResponseComparatorInterface::VERBOSITY_VERBOSE) {
+            echo 'Headers:' . "\n";
+            foreach ($responseHeaders as $headerName => $headerValue) {
+                $headerWrited = false;
+                foreach ($allowedHeaders as $allowedHeaderName => $allowedHeaderValue) {
+                    if ($allowedHeaderName === $headerName) {
+                        if ((string)$allowedHeaderValue === $headerValue) {
+                            $this->writeOkValue($headerName . ': ' . $headerValue);
+                        } else {
+                            echo $headerName . ': expected ';
+                            $this->writeExpectedValue($allowedHeaderValue);
+                            echo ', got ';
+                            $this->writeBadValue($headerValue);
+                        }
+                        echo "\n";
+                        $headerWrited = true;
+                        break;
+                    }
+                }
+                if (in_array($headerName, $unallowedHeaders)) {
+                    $this->writeBadValue($headerName);
+                    echo ': ' . $headerValue . ' ' . "\n";
+                    $headerWrited = true;
+                }
+
+                if ($verbosity >= ResponseComparatorInterface::VERBOSITY_VERY_VERBOSE && $headerWrited === false) {
+                    echo $headerName . ': ' . $headerValue . "\n";
+                }
             }
         }
 

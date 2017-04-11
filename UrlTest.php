@@ -159,6 +159,19 @@ class UrlTest
             $this->compare($expectedResponse->getContentType(), $this->getResponse()->getContentType());
             $this->compare($expectedResponse->getHeaderSize(), $this->getResponse()->getHeaderSize());
 
+            foreach ($this->getResponse()->getHeaders() ?? [] as $headerName => $headerValue) {
+                foreach ($expectedResponse->getHeaders() as $allowedHeaderName => $allowedHeaderValue) {
+                    if ($allowedHeaderName === $headerName && (string) $allowedHeaderValue !== $headerValue) {
+                        $this->isValid = false;
+                        break;
+                    }
+                }
+
+                if (in_array($headerName, $expectedResponse->getUnallowedHeaders())) {
+                    $this->isValid = false;
+                }
+            }
+
             $expectedBody = $this->getTransformedBody(
                 $expectedResponse->getBody(),
                 $expectedResponse->getBodyTransformerName()

@@ -39,6 +39,9 @@ testId:
             # list of headers who has to exists, and have exaclty this value
             headers:
                 X-Foo: bar
+            # list of headers should not exists
+            unallowedHeaders:
+                - X-Bar
         body:
             # content to compare with response, <file($fileName)> will get content of $fileName
             content: <file('content.html')>

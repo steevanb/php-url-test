@@ -15,6 +15,9 @@ class UrlTestService
     /** @var ?callable */
     protected $onProgressCallback;
 
+    /** @var int */
+    protected $parallelNumber = 1;
+
     public function addTestDirectory(string $directory, bool $recursive = true): self
     {
         if (substr($directory, -1) !== DIRECTORY_SEPARATOR) {
@@ -25,7 +28,7 @@ class UrlTestService
             if ($entry === '.' || $entry === '..') {
                 continue;
             }
-            if (is_dir($entry) && $recursive) {
+            if (is_dir($directory . $entry) && $recursive) {
                 $this->addTestDirectory($directory . $entry);
             } elseif (is_file($directory. $entry) && substr($entry, -12) === '.urltest.yml') {
                 $this->addTestFile($directory . $entry);
@@ -66,6 +69,18 @@ class UrlTestService
         return count($this->tests);
     }
 
+    public function setParallelNumber(int $parallelNumber): self
+    {
+        $this->parallelNumber = $parallelNumber;
+
+        return $this;
+    }
+
+    public function getParallelNumber(): int
+    {
+        return $this->parallelNumber;
+    }
+
     public function setOnProgressCallback(?callable $onProgressCallback): self
     {
         $this->onProgressCallback = $onProgressCallback;
@@ -80,8 +95,13 @@ class UrlTestService
 
     public function executeTests(): bool
     {
+        return ($this->getParallelNumber() > 1) ? $this->executeParallelTests() : $this->executeSequentialTests();
+    }
+
+    protected function executeSequentialTests(): bool
+    {
         $return = true;
-        foreach ($this->getTests() as $id => $urlTest) {
+        foreach ($this->getTests() as $urlTest) {
             $urlTest->execute();
 
             if (is_callable($this->getOnProgressCallback())) {
@@ -90,6 +110,47 @@ class UrlTestService
 
             if ($urlTest->isValid() === false) {
                 $return = false;
+            }
+        }
+
+        return $return;
+    }
+
+    protected function executeParallelTests(): bool
+    {
+        $return = true;
+        $tests = $this->getTests();
+        $testIndex = 0;
+
+        while (count($tests) > 0) {
+            $processes = [];
+            $count = min($this->getParallelNumber(), count($tests));
+            for ($i = 0; $i < $count; $i++) {
+                $processes[] = [
+                    'urlTest' => array_shift($tests)
+                ];
+            }
+
+            foreach ($processes as &$process) {
+                $testIndex++;
+                $pipes = 'pipes' . $testIndex;
+                $process['process'] = proc_open(
+                    'php ' . __DIR__ . '/bin/urltest.php --comparator=console --progress=false ../test.urltest.yml',
+                    [
+                        0 => ["pipe", "r"],
+                        1 => ["pipe", "w"],
+                        2 => ["file", "/tmp/error-output.txt", "a"]
+                    ],
+                    $$pipes
+                );
+
+                $process['pipes'] = &$$pipes;
+            }
+
+            foreach ($processes as &$process) {
+                echo stream_get_contents($process['pipes'][1]);
+                fclose($process['pipes'][1]);
+                proc_close($process['process']);
             }
         }
 

@@ -24,8 +24,11 @@ class Response
     /** @var ?string */
     protected $contentType;
 
-    /** @var string[] */
-    protected $headers = [];
+    /** @var ?string[] */
+    protected $headers;
+
+    /** @var ?string[] */
+    protected $unallowedHeaders;
 
     /** @var ?int */
     protected $headerSize;
@@ -132,6 +135,18 @@ class Response
     public function getHeaders(): ?array
     {
         return $this->headers;
+    }
+
+    public function setUnallowedHeaders(?array $unallowedHeaders): self
+    {
+        $this->unallowedHeaders = $unallowedHeaders;
+
+        return $this;
+    }
+
+    public function getUnallowedHeaders(): ?array
+    {
+        return $this->unallowedHeaders;
     }
 
     public function setHeaderSize(?int $headerSize): self
