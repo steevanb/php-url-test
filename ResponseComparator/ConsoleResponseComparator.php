@@ -166,7 +166,7 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
         if ($verbosity >= ResponseComparatorInterface::VERBOSITY_VERBOSE) {
             $responseConfiguration = $urlTest->getConfiguration()->getResponse();
             if ($responseConfiguration->getBody() !== null) {
-                echo 'Body: ' . "\n";
+                echo 'Body: ';
                 if (
                     $responseConfiguration->getTransformedBody() === $urlTest->getResponse()->getTransformedBody()
                 ) {
@@ -176,10 +176,14 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
                 }
                 echo "\n";
                 if ($verbosity === ResponseComparatorInterface::VERBOSITY_DEBUG) {
-                    if ($responseConfiguration->getBody() !== $urlTest->getResponse()->getBody()) {
-                        echo 'Expected body: ' . "\n" . $responseConfiguration->getBody() . "\n";
+                    if ($responseConfiguration->getBody() !== $urlTest->getResponse()->getTransformedBody()) {
+                        echo 'Expected body: ' . "\n";
+                        $this->writeExpectedValue($responseConfiguration->getTransformedBody());
+                        echo "\n";
                     }
-                    echo 'Response body: ' . "\n" . $urlTest->getResponse()->getBody() . "\n";
+                    echo 'Response body: ' . "\n";
+                    $this->writeBadValue($urlTest->getResponse()->getBody());
+                    echo "\n";
                 }
             } elseif ($verbosity === ResponseComparatorInterface::VERBOSITY_DEBUG) {
                 echo 'Body: ' . "\n" . $urlTest->getResponse()->getBody() . "\n";
@@ -226,9 +230,9 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
                 foreach ($allowedHeaders as $allowedHeaderName => $allowedHeaderValue) {
                     if ($allowedHeaderName === $headerName) {
                         if ((string)$allowedHeaderValue === $headerValue) {
-                            $this->writeOkValue($headerName . ': ' . $headerValue);
+                            $this->writeOkValue('  ' . $headerName . ': ' . $headerValue);
                         } else {
-                            echo $headerName . ': expected ';
+                            echo '  ' . $headerName . ': expected ';
                             $this->writeExpectedValue($allowedHeaderValue);
                             echo ', got ';
                             $this->writeBadValue($headerValue);
@@ -239,13 +243,14 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
                     }
                 }
                 if (in_array($headerName, $unallowedHeaders)) {
+                    echo '  ';
                     $this->writeBadValue($headerName);
                     echo ': ' . $headerValue . ' ' . "\n";
                     $headerWrited = true;
                 }
 
                 if ($verbosity >= ResponseComparatorInterface::VERBOSITY_VERY_VERBOSE && $headerWrited === false) {
-                    echo $headerName . ': ' . $headerValue . "\n";
+                    echo '  ' . $headerName . ': ' . $headerValue . "\n";
                 }
             }
         }
