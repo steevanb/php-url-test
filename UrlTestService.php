@@ -43,9 +43,34 @@ class UrlTestService
 
     public function addTestFile(string $fileName): self
     {
+        if (file_exists($fileName) === false) {
+            throw new \Exception('UrlTest file "' . $fileName . '" does not exists.');
+        }
         Parser::registerFileFunction(dirname($fileName));
-        foreach ((new Parser())->parse(file_get_contents($fileName)) as $id => $config) {
-            $this->addTest($id, $this->createTest($id, $config));
+
+        $configurations = (new Parser())->parse(file_get_contents($fileName));
+        if (is_array($configurations) === false) {
+            throw new \Exception('Url test configuration file "' . $fileName . '" is malformed.');
+        }
+        if (array_key_exists('_default', $configurations)) {
+            $defaultConfiguration = Configuration::create($configurations['_default']);
+            unset($configurations['_default']);
+        } else {
+            $defaultConfiguration = new Configuration();
+        }
+
+        foreach ($configurations as $id => $data) {
+            $urlTest = $this->createTest($id, $data, $defaultConfiguration);
+            $this
+                ->addTest($id, $urlTest)
+                ->addResponseBodyTransformer(
+                    $urlTest->getConfiguration()->getResponse()->getBodyTransformerName(),
+                    $urlTest
+                )
+                ->addResponseBodyTransformer(
+                    $urlTest->getConfiguration()->getResponse()->getRealResponseBodyTransformerName(),
+                    $urlTest
+                );
         }
 
         return $this;
@@ -172,11 +197,25 @@ class UrlTestService
         return $return;
     }
 
-    protected function createTest(string $id, array $config): UrlTest
+    protected function createTest(string $id, array $data, Configuration $defaultConfiguration = null): UrlTest
     {
-        $return = new UrlTest($id);
-        Configuration::create($config, $return);
+        $configuration = Configuration::create($data, $defaultConfiguration);
+        $return = (new UrlTest($id))
+            ->setConfiguration($configuration);
 
         return $return;
+    }
+
+    protected function addResponseBodyTransformer(?string $bodyTransformer, UrlTest $urlTest): self
+    {
+        if (
+            $bodyTransformer !== null
+            && $urlTest->hasResponseBodyTransformer($bodyTransformer) === false
+            && class_exists($bodyTransformer)
+        ) {
+            $urlTest->addResponseBodyTransformer($bodyTransformer, new $bodyTransformer());
+        }
+
+        return $this;
     }
 }

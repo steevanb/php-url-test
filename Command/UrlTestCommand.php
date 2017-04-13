@@ -95,6 +95,8 @@ class UrlTestCommand extends Command
             $urlTestService->addTestDirectory($path, $recursive);
         } elseif (is_file($path)) {
             $urlTestService->addTestFile($path);
+        } else {
+            throw new \Exception('Invalid path or file name "' . $path . '".');
         }
 
         return $this;

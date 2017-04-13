@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace steevanb\PhpUrlTest\Configuration;
 
-use steevanb\PhpUrlTest\UrlTest;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class Configuration
 {
-    public static function create(array $configuration, UrlTest $urlTest): self
+    public static function create(array $configuration, Configuration $defaultConfiguration = null): self
     {
-        $return = new static($urlTest);
-        static::resolve($configuration, $return);
+        $return = new static();
+        static::resolve($configuration, $defaultConfiguration);
 
         $return
             ->getRequest()
@@ -52,8 +51,12 @@ class Configuration
         return $return;
     }
 
-    public static function resolve(array &$data, Configuration $configuration)
+    public static function resolve(array &$data, Configuration $defaultConfiguration = null)
     {
+        if ($defaultConfiguration === null) {
+            $defaultConfiguration = new Configuration();
+        }
+
         $resolver = new OptionsResolver();
         $resolver
             ->setDefined('request')
@@ -66,23 +69,23 @@ class Configuration
 
         $requestResolver = new OptionsResolver();
         $requestResolver
-            ->setDefined('url')
+            ->setDefault('url', $defaultConfiguration->getRequest()->getUrl())
             ->setAllowedTypes('url', 'string')
-            ->setDefault('timeout', $configuration->getRequest()->getTimeout())
+            ->setDefault('timeout', $defaultConfiguration->getRequest()->getTimeout())
             ->setAllowedTypes('timeout', 'int')
-            ->setDefault('port', $configuration->getRequest()->getPort())
+            ->setDefault('port', $defaultConfiguration->getRequest()->getPort())
             ->setAllowedTypes('port', 'int')
-            ->setDefault('method', $configuration->getRequest()->getMethod())
+            ->setDefault('method', $defaultConfiguration->getRequest()->getMethod())
             ->setAllowedTypes('method', 'string')
             ->setDefault('headers', [])
             ->setAllowedTypes('headers', 'array')
-            ->setDefault('userAgent', $configuration->getRequest()->getUserAgent())
+            ->setDefault('userAgent', $defaultConfiguration->getRequest()->getUserAgent())
             ->setAllowedTypes('userAgent', 'string')
-            ->setDefault('postFields', [])
+            ->setDefault('postFields', $defaultConfiguration->getRequest()->getPostFields())
             ->setAllowedTypes('postFields', 'array')
-            ->setDefault('referer', null)
+            ->setDefault('referer', $defaultConfiguration->getRequest()->getReferer())
             ->setAllowedTypes('referer', ['null', 'string'])
-            ->setDefault('allowRedirect', $configuration->getRequest()->isAllowRedirect())
+            ->setDefault('allowRedirect', $defaultConfiguration->getRequest()->isAllowRedirect())
             ->setAllowedTypes('allowRedirect', 'bool');
         $data['request'] = $requestResolver->resolve($data['request']);
 
@@ -90,15 +93,15 @@ class Configuration
         $expectedResponseResolver
             ->setDefault('redirect', [])
             ->setAllowedTypes('redirect', 'array')
-            ->setDefault('code', null)
+            ->setDefault('code', $defaultConfiguration->getResponse()->getCode())
             ->setAllowedTypes('code', ['null', 'int'])
-            ->setDefault('numConnects', null)
+            ->setDefault('numConnects', $defaultConfiguration->getResponse()->getNumConnects())
             ->setAllowedTypes('numConnects', ['null', 'int'])
-            ->setDefault('size', null)
+            ->setDefault('size', $defaultConfiguration->getResponse()->getSize())
             ->setAllowedTypes('size', ['null', 'int'])
-            ->setDefault('contentType', null)
+            ->setDefault('contentType', $defaultConfiguration->getResponse()->getContentType())
             ->setAllowedTypes('contentType', ['null', 'string'])
-            ->setDefault('url', null)
+            ->setDefault('url', $defaultConfiguration->getResponse()->getUrl())
             ->setAllowedTypes('url', ['null', 'string'])
             ->setDefault('header', [])
             ->setAllowedTypes('header', 'array')
@@ -108,11 +111,11 @@ class Configuration
 
         $expectedResponseRedirectResolver = new OptionsResolver();
         $expectedResponseRedirectResolver
-            ->setDefault('min', null)
+            ->setDefault('min', $defaultConfiguration->getResponse()->getRedirectMin())
             ->setAllowedTypes('min', ['null', 'int'])
-            ->setDefault('max', null)
+            ->setDefault('max', $defaultConfiguration->getResponse()->getRedirectMax())
             ->setAllowedTypes('max', ['null', 'int'])
-            ->setDefault('count', null)
+            ->setDefault('count', $defaultConfiguration->getResponse()->getRedirectCount())
             ->setAllowedTypes('count', ['null', 'int']);
         $data['expectedResponse']['redirect'] = $expectedResponseRedirectResolver->resolve(
             $data['expectedResponse']['redirect']
@@ -124,7 +127,7 @@ class Configuration
             ->setAllowedTypes('headers', 'array')
             ->setDefault('unallowedHeaders', [])
             ->setAllowedTypes('unallowedHeaders', 'array')
-            ->setDefault('size', null)
+            ->setDefault('size', $defaultConfiguration->getResponse()->getHeaderSize())
             ->setAllowedTypes('size', ['null', 'int']);
         $data['expectedResponse']['header'] = $expectedResponseHeaderResolver->resolve(
             $data['expectedResponse']['header']
@@ -132,13 +135,13 @@ class Configuration
 
         $expectedResponseBodyResolver = new OptionsResolver();
         $expectedResponseBodyResolver
-            ->setDefault('content', null)
+            ->setDefault('content', $defaultConfiguration->getResponse()->getBody())
             ->setAllowedTypes('content', ['null', 'string'])
-            ->setDefault('size', null)
+            ->setDefault('size', $defaultConfiguration->getResponse()->getBodySize())
             ->setAllowedTypes('size', ['null', 'int'])
-            ->setDefault('transformer', null)
+            ->setDefault('transformer', $defaultConfiguration->getResponse()->getBodyTransformerName())
             ->setAllowedTypes('transformer', ['null', 'string'])
-            ->setDefault('fileName', null)
+            ->setDefault('fileName', $defaultConfiguration->getResponse()->getBodyFileName())
             ->setAllowedTypes('fileName', ['null', 'string']);
         $data['expectedResponse']['body'] = $expectedResponseBodyResolver->resolve($data['expectedResponse']['body']);
 
@@ -150,15 +153,12 @@ class Configuration
 
         $responseBodyResolver = new OptionsResolver();
         $responseBodyResolver
-            ->setDefault('transformer', null)
+            ->setDefault('transformer', $defaultConfiguration->getResponse()->getRealResponseBodyTransformerName())
             ->setAllowedTypes('transformer', ['null', 'string'])
-            ->setDefault('fileName', null)
+            ->setDefault('fileName', $defaultConfiguration->getResponse()->getRealResponseBodyFileName())
             ->setAllowedTypes('fileName', ['null', 'string']);
         $data['response']['body'] = $responseBodyResolver->resolve($data['response']['body']);
     }
-
-    /** @var UrlTest */
-    protected $urlTest;
 
     /** @var Request */
     protected $request;
@@ -166,17 +166,10 @@ class Configuration
     /** @var Response */
     protected $response;
 
-    public function __construct(UrlTest $urlTest)
+    public function __construct()
     {
-        $this->urlTest = $urlTest;
         $this->request = new Request();
         $this->response = new Response($this);
-        $urlTest->setConfiguration($this);
-    }
-
-    public function getUrlTest(): UrlTest
-    {
-        return $this->urlTest;
     }
 
     public function getRequest(): Request

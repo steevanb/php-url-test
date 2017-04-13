@@ -173,14 +173,6 @@ class Response
         return $this->body;
     }
 
-    public function getTransformedBody(): ?string
-    {
-        return $this
-            ->configuration
-            ->getUrlTest()
-            ->getTransformedBody($this->getBody(), $this->getBodyTransformerName());
-    }
-
     public function setBodySize(?int $bodySize): self
     {
         $this->bodySize = $bodySize;
