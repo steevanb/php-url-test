@@ -58,6 +58,11 @@ class UrlTest
         return $this;
     }
 
+    public function hasResponseBodyTransformer(string $name): bool
+    {
+        return array_key_exists($name, $this->responseBodyTransformers);
+    }
+
     /** @return ResponseBodyTransformerInterface[] */
     public function getResponseBodyTransformers(): array
     {
@@ -168,6 +173,16 @@ class UrlTest
                 }
 
                 if (in_array($headerName, $expectedResponse->getUnallowedHeaders())) {
+                    $this->isValid = false;
+                }
+            }
+            $responseHeaderNames = array_keys($this->getResponse()->getHeaders());
+            $responseHeaderValues = $this->getResponse()->getHeaders();
+            foreach ($expectedResponse->getHeaders() as $headerName => $headerValue) {
+                if (
+                    in_array($headerName, $responseHeaderNames) === false
+                    || (string) $headerValue !== $responseHeaderValues[$headerName]
+                ) {
                     $this->isValid = false;
                 }
             }

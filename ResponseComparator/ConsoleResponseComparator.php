@@ -166,25 +166,33 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
         if ($verbosity >= ResponseComparatorInterface::VERBOSITY_VERBOSE) {
             $responseConfiguration = $urlTest->getConfiguration()->getResponse();
             if ($responseConfiguration->getBody() !== null) {
+                $expectedBody = $urlTest->getTransformedBody(
+                    $responseConfiguration->getBody(),
+                    $responseConfiguration->getBodyTransformerName()
+                );
                 echo 'Body: ';
                 if (
-                    $responseConfiguration->getTransformedBody() === $urlTest->getResponse()->getTransformedBody()
+                    $expectedBody === $urlTest->getResponse()->getTransformedBody()
                 ) {
-                    $this->writeOkValue('ok');
+                    if ($verbosity < ResponseComparatorInterface::VERBOSITY_DEBUG) {
+                        $this->writeOkValue('ok');
+                    } else {
+                        echo "\n";
+                        $this->writeOkValue($urlTest->getResponse()->getTransformedBody());
+                    }
                 } else {
-                    $this->writeBadValue('fail');
+                    if ($verbosity < ResponseComparatorInterface::VERBOSITY_DEBUG) {
+                        $this->writeBadValue('fail');
+                    } else {
+                        $this->writeBadValue('fail');
+                        echo "\n" . 'Expected body: ' . "\n";
+                        $this->writeExpectedValue($expectedBody);
+                        echo "\n";
+                        echo 'Response body: ' . "\n";
+                        $this->writeBadValue($urlTest->getResponse()->getBody());
+                    }
                 }
                 echo "\n";
-                if ($verbosity === ResponseComparatorInterface::VERBOSITY_DEBUG) {
-                    if ($responseConfiguration->getBody() !== $urlTest->getResponse()->getTransformedBody()) {
-                        echo 'Expected body: ' . "\n";
-                        $this->writeExpectedValue($responseConfiguration->getTransformedBody());
-                        echo "\n";
-                    }
-                    echo 'Response body: ' . "\n";
-                    $this->writeBadValue($urlTest->getResponse()->getBody());
-                    echo "\n";
-                }
             } elseif ($verbosity === ResponseComparatorInterface::VERBOSITY_DEBUG) {
                 echo 'Body: ' . "\n" . $urlTest->getResponse()->getBody() . "\n";
             }
@@ -217,8 +225,8 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
     }
 
     protected function writeHeadersDiff(
-        array $allowedHeaders,
-        array $unallowedHeaders,
+        ?array $allowedHeaders,
+        ?array $unallowedHeaders,
         array $responseHeaders,
         int $verbosity
     ): self
@@ -227,7 +235,7 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
             echo 'Headers:' . "\n";
             foreach ($responseHeaders as $headerName => $headerValue) {
                 $headerWrited = false;
-                foreach ($allowedHeaders as $allowedHeaderName => $allowedHeaderValue) {
+                foreach ($allowedHeaders ?? [] as $allowedHeaderName => $allowedHeaderValue) {
                     if ($allowedHeaderName === $headerName) {
                         if ((string)$allowedHeaderValue === $headerValue) {
                             $this->writeOkValue('  ' . $headerName . ': ' . $headerValue);
@@ -242,7 +250,7 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
                         break;
                     }
                 }
-                if (in_array($headerName, $unallowedHeaders)) {
+                if (in_array($headerName, $unallowedHeaders ?? [])) {
                     echo '  ';
                     $this->writeBadValue($headerName);
                     echo ': ' . $headerValue . ' ' . "\n";
@@ -251,6 +259,17 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
 
                 if ($verbosity >= ResponseComparatorInterface::VERBOSITY_VERY_VERBOSE && $headerWrited === false) {
                     echo '  ' . $headerName . ': ' . $headerValue . "\n";
+                }
+            }
+
+            $responseHeaderNames = array_keys($responseHeaders);
+            foreach ($allowedHeaders ?? [] as $headerName => $headerValue) {
+                if (in_array($headerName, $responseHeaderNames) === false) {
+                    echo '  expected ';
+                    $this->writeExpectedValue($headerName . ': ' . $headerValue);
+                    echo ', ';
+                    $this->writeBadValue('but header not found');
+                    echo "\n";
                 }
             }
         }
