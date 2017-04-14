@@ -20,7 +20,7 @@ class Configuration
             ->setPort($configuration['request']['port'])
             ->setMethod($configuration['request']['method'])
             ->setUserAgent($configuration['request']['userAgent'])
-            ->setPostFields($configuration['request']['postFields'])
+            ->setPostData($configuration['request']['postData'])
             ->setReferer($configuration['request']['referer'])
             ->setAllowRedirect($configuration['request']['allowRedirect'])
             ->setHeaders($configuration['request']['headers']);
@@ -51,7 +51,7 @@ class Configuration
         return $return;
     }
 
-    public static function resolve(array &$data, Configuration $defaultConfiguration = null)
+    protected static function resolve(array &$data, Configuration $defaultConfiguration = null)
     {
         if ($defaultConfiguration === null) {
             $defaultConfiguration = new Configuration();
@@ -81,8 +81,8 @@ class Configuration
             ->setAllowedTypes('headers', 'array')
             ->setDefault('userAgent', $defaultConfiguration->getRequest()->getUserAgent())
             ->setAllowedTypes('userAgent', 'string')
-            ->setDefault('postFields', $defaultConfiguration->getRequest()->getPostFields())
-            ->setAllowedTypes('postFields', 'array')
+            ->setDefault('postData', $defaultConfiguration->getRequest()->getPostData())
+            ->setAllowedTypes('postData', ['null', 'string'])
             ->setDefault('referer', $defaultConfiguration->getRequest()->getReferer())
             ->setAllowedTypes('referer', ['null', 'string'])
             ->setDefault('allowRedirect', $defaultConfiguration->getRequest()->isAllowRedirect())

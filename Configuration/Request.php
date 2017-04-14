@@ -21,8 +21,8 @@ class Request
     /** @var string */
     protected $userAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36';
 
-    /** @var string[] */
-    protected $postFields = [];
+    /** @var ?string */
+    protected $postData;
 
     /** @var ?string */
     protected $referer;
@@ -100,25 +100,6 @@ class Request
         return $this->userAgent;
     }
 
-    public function setPostFields(array $postFields): self
-    {
-        $this->postFields = $postFields;
-
-        return $this;
-    }
-
-    public function addPostField(string $name, string $value): self
-    {
-        $this->postFields[$name] = $value;
-
-        return $this;
-    }
-
-    public function getPostFields(): array
-    {
-        return $this->postFields;
-    }
-
     public function setReferer(?string $referer): self
     {
         $this->referer = $referer;
@@ -153,5 +134,17 @@ class Request
     public function isAllowRedirect(): bool
     {
         return $this->allowRedirect;
+    }
+
+    public function setPostData(?string $postData): self
+    {
+        $this->postData = $postData;
+
+        return $this;
+    }
+
+    public function getPostData(): ?string
+    {
+        return $this->postData;
     }
 }
