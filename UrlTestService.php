@@ -46,21 +46,21 @@ class UrlTestService
         if (file_exists($fileName) === false) {
             throw new \Exception('UrlTest file "' . $fileName . '" does not exists.');
         }
-        Parser::registerFileFunction(dirname($fileName));
 
+        Parser::registerFileFunction(dirname($fileName));
         $configurations = (new Parser())->parse(file_get_contents($fileName));
         if (is_array($configurations) === false) {
             throw new \Exception('Url test configuration file "' . $fileName . '" is malformed.');
         }
         if (array_key_exists('_default', $configurations)) {
-            $defaultConfiguration = Configuration::create($configurations['_default']);
+            $defaultConfiguration = $this->createConfiguration($configurations['_default'], $fileName, '_default');
             unset($configurations['_default']);
         } else {
             $defaultConfiguration = new Configuration();
         }
 
         foreach ($configurations as $id => $data) {
-            $urlTest = $this->createTest($id, $data, $defaultConfiguration);
+            $urlTest = new UrlTest($id, $this->createConfiguration($data, $fileName, $id, $defaultConfiguration));
             $this
                 ->addTest($id, $urlTest)
                 ->addResponseBodyTransformer(
@@ -197,15 +197,6 @@ class UrlTestService
         return $return;
     }
 
-    protected function createTest(string $id, array $data, Configuration $defaultConfiguration = null): UrlTest
-    {
-        $configuration = Configuration::create($data, $defaultConfiguration);
-        $return = (new UrlTest($id))
-            ->setConfiguration($configuration);
-
-        return $return;
-    }
-
     protected function addResponseBodyTransformer(?string $bodyTransformer, UrlTest $urlTest): self
     {
         if (
@@ -217,5 +208,24 @@ class UrlTestService
         }
 
         return $this;
+    }
+
+    protected function createConfiguration(
+        array $data,
+        string $fileName,
+        string $urlTestId,
+        Configuration $defaultConfiguration = null
+    ): Configuration {
+        try {
+            $return = Configuration::create($data, $defaultConfiguration);
+        } catch (\Exception $exception) {
+            throw new \Exception(
+                '[' . $fileName . '#' . $urlTestId . '] ' . $exception->getMessage(),
+                $exception->getCode(),
+                $exception
+            );
+        }
+
+        return $return;
     }
 }

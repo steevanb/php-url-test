@@ -27,23 +27,16 @@ class UrlTest
     /** @var ResponseBodyTransformerInterface[] */
     protected $responseBodyTransformers = [];
 
-    public function __construct(string $id)
+    public function __construct(string $id, Configuration $configuration)
     {
         $this->id = $id;
-        $this->configuration = new Configuration($this);
+        $this->configuration = $configuration;
         $this->addResponseBodyTransformer('json', new JsonResponseBodyTransformer());
     }
 
     public function getId(): string
     {
         return $this->id;
-    }
-
-    public function setConfiguration(Configuration $configuration): self
-    {
-        $this->configuration = $configuration;
-
-        return $this;
     }
 
     public function getConfiguration(): Configuration
@@ -234,7 +227,7 @@ class UrlTest
             CURLOPT_HEADER => true,
             CURLOPT_HTTPHEADER => $headers,
             CURLOPT_REFERER => $request->getReferer(),
-//            CURLOPT_POSTFIELDS => $this->getRequest()->getPostFields(),
+            CURLOPT_POSTFIELDS => $request->getPostData(),
             CURLOPT_FOLLOWLOCATION => $request->isAllowRedirect(),
             CURLOPT_TIMEOUT => $request->getTimeout(),
             CURLOPT_USERAGENT => $request->getUserAgent()
