@@ -177,24 +177,42 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
                     if ($verbosity < ResponseComparatorInterface::VERBOSITY_DEBUG) {
                         $this->writeOkValue('ok');
                     } else {
-                        echo "\n";
-                        $this->writeOkValue($urlTest->getResponse()->getTransformedBody());
+                        if ($urlTest->getResponse()->getTransformedBody() === null) {
+                            $this->writeOkValue('<empty>');
+                        } else {
+                            echo "\n";
+                            $this->writeOkValue($urlTest->getResponse()->getTransformedBody());
+                        }
                     }
                 } else {
                     if ($verbosity < ResponseComparatorInterface::VERBOSITY_DEBUG) {
                         $this->writeBadValue('fail');
                     } else {
                         $this->writeBadValue('fail');
-                        echo "\n" . 'Expected body: ' . "\n";
-                        $this->writeExpectedValue($expectedBody);
+                        echo "\n" . 'Expected body: ';
+                        if (empty($expectedBody)) {
+                            $this->writeExpectedValue('<empty>');
+                        } else {
+                            echo "\n";
+                            $this->writeExpectedValue($expectedBody);
+                        }
                         echo "\n";
-                        echo 'Response body: ' . "\n";
-                        $this->writeBadValue($urlTest->getResponse()->getBody());
+                        echo 'Response body: ';
+                        if (empty($urlTest->getResponse()->getBody())) {
+                            $this->writeBadValue('<empty>');
+                        } else {
+                            echo "\n";
+                            $this->writeBadValue($urlTest->getResponse()->getBody());
+                        }
                     }
                 }
                 echo "\n";
             } elseif ($verbosity === ResponseComparatorInterface::VERBOSITY_DEBUG) {
-                echo 'Body: ' . "\n" . $urlTest->getResponse()->getBody() . "\n";
+                if (empty($urlTest->getResponse()->getBody())) {
+                    echo 'Body: <empty>' . "\n";
+                } else {
+                    echo 'Body:' . "\n" . $urlTest->getResponse()->getBody() . "\n";
+                }
             }
         }
 
