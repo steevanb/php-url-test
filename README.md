@@ -1,8 +1,6 @@
-[![version](https://img.shields.io/badge/alpha-0.0.0-red.svg)](https://github.com/steevanb/php-url-test/tree/0.0.0)
-![Lines](https://img.shields.io/badge/code%20lines-2048-green.svg)
+[![version](https://img.shields.io/badge/alpha-0.0.1-red.svg)](https://github.com/steevanb/php-url-test/tree/0.0.1)
+![Lines](https://img.shields.io/badge/code%20lines-2114-green.svg)
 ![Total Downloads](https://poser.pugx.org/steevanb/php-url-test/downloads)
-[![SensionLabsInsight](https://img.shields.io/badge/SensionLabsInsight-platinum-brightgreen.svg)](https://insight.sensiolabs.com/projects/3ea1fb58-8abf-4d05-bc99-6e2169b86337/analyses/2)
-[![Scrutinizer](https://scrutinizer-ci.com/g/steevanb/php-url-test/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/steevanb/php-url-test)
 
 php-url-test
 ============
@@ -93,4 +91,11 @@ testId:
             transformer: json
             # file name where response body will be saved
             fileName: /tmp/urlTestResult/response.html
+```
+
+You can define default configurations for all tests in your _.urltest.yml_ file :
+```yaml
+_default:
+    # here you can define sames configurations as for a test
+    # this configurations will be applied to all tests in this file, if value is not defined, null or ~
 ```
