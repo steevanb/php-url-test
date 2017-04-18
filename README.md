@@ -1,5 +1,5 @@
-[![version](https://img.shields.io/badge/alpha-0.0.1-red.svg)](https://github.com/steevanb/php-url-test/tree/0.0.1)
-![Lines](https://img.shields.io/badge/code%20lines-2114-green.svg)
+[![version](https://img.shields.io/badge/alpha-0.0.3-red.svg)](https://github.com/steevanb/php-url-test/tree/0.0.3)
+![Lines](https://img.shields.io/badge/code%20lines-2194-green.svg)
 ![Total Downloads](https://poser.pugx.org/steevanb/php-url-test/downloads)
 
 php-url-test
@@ -24,6 +24,12 @@ Launch tests
 ```bash
 # scan all directories to find *.urltest.yml files, --recursive=true or -r=true to do it recursively
 ./bin/urltest.php src/
+
+# test url_test_foo
+./bin/urltest.php src/ url_test_foo
+
+# test url_test_foo and all test who match preg pattern /^url_test_bar[0..9]{1,}$/
+./bin/urltest.php src/ url_test_foo,/^url_test_bar[0..9]{1,}$/
 
 # launche tests in foo.urltest.yml only
 ./bin/urltest.php src/Tests/foo.urltest.yml
