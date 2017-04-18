@@ -59,11 +59,13 @@ class UrlTestCommand extends Command
                 'errorcomparator',
                 'ec',
                 InputOption::VALUE_OPTIONAL,
-                'Comparator name to compare response with expected one when test fail'
+                'Comparator name to compare response with expected one when test fail',
+                'console'
             )
             ->addOption('progress', null, InputOption::VALUE_OPTIONAL, 'Show/hide progress bar.', 'true')
             ->addOption('recursive', 'r', InputOption::VALUE_OPTIONAL, 'Set recursive if path is a directory.', 'true')
-            ->addArgument('path', InputArgument::REQUIRED, 'Configuration file name, or directories separated by ",".');
+            ->addArgument('path', InputArgument::REQUIRED, 'Configuration file name, or directories separated by ",".')
+            ->addArgument('ids', InputArgument::OPTIONAL, 'UrlTest identifiers preg pattern to test.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -73,13 +75,18 @@ class UrlTestCommand extends Command
         $this->definePath($service, $input->getArgument('path'), $input->getOption('recursive') === 'true');
         $service->setParallelNumber(intval($input->getOption('parallel')));
 
-        $this->initProgressBar($output, $service, $input->getOption('progress') === 'true');
-        $return = $service->executeTests() === true ? 0 : 1;
+        $ids = $input->getArgument('ids') === null ? null : explode(',', $input->getArgument('ids'));
+        if ($service->countTests($ids) === 0) {
+            throw new \Exception('No test found.');
+        }
+
+        $this->initProgressBar($output, $service, $ids, $input->getOption('progress') === 'true');
+        $return = $service->executeTests($ids) === true ? 0 : 1;
         $this->finishProgressBar();
 
         if ($input->getOption('parallel') <= 1) {
             $this->compareResponses(
-                $service->getTests(),
+                $service->getTests($ids),
                 $input->getOption('comparator'),
                 $input->getOption('errorcomparator'),
                 $output
@@ -159,10 +166,10 @@ class UrlTestCommand extends Command
         return $return;
     }
 
-    protected function initProgressBar(OutputInterface $output, UrlTestService $service, bool $show): self
+    protected function initProgressBar(OutputInterface $output, UrlTestService $service, ?array $ids, bool $show): self
     {
         if ($show) {
-            $this->progressBar = new ProgressBar($output, $service->countTests());
+            $this->progressBar = new ProgressBar($output, $service->countTests($ids));
             $this->progressBar->setFormat(
                 '[%bar%] %current%/%max% %message% | %elapsed:6s%/%estimated:-6s% | %memory:6s%' . "\n"
             );

@@ -59,7 +59,7 @@ class Configuration
 
         $resolver = new OptionsResolver();
         $resolver
-            ->setDefined('request')
+            ->setDefault('request', [])
             ->setAllowedTypes('request', 'array')
             ->setDefault('expectedResponse', [])
             ->setAllowedTypes('expectedResponse', 'array')
@@ -77,8 +77,8 @@ class Configuration
             ->setAllowedTypes('port', 'int')
             ->setDefault('method', $defaultConfiguration->getRequest()->getMethod())
             ->setAllowedTypes('method', 'string')
-            ->setDefault('headers', [])
-            ->setAllowedTypes('headers', 'array')
+            ->setDefault('headers', $defaultConfiguration->getRequest()->getHeaders())
+            ->setAllowedTypes('headers', ['null', 'array'])
             ->setDefault('userAgent', $defaultConfiguration->getRequest()->getUserAgent())
             ->setAllowedTypes('userAgent', 'string')
             ->setDefault('postData', $defaultConfiguration->getRequest()->getPostData())
@@ -125,8 +125,8 @@ class Configuration
         $expectedResponseHeaderResolver
             ->setDefault('headers', [])
             ->setAllowedTypes('headers', 'array')
-            ->setDefault('unallowedHeaders', [])
-            ->setAllowedTypes('unallowedHeaders', 'array')
+            ->setDefault('unallowedHeaders', $defaultConfiguration->getResponse()->getUnallowedHeaders())
+            ->setAllowedTypes('unallowedHeaders', ['null', 'array'])
             ->setDefault('size', $defaultConfiguration->getResponse()->getHeaderSize())
             ->setAllowedTypes('size', ['null', 'int']);
         $data['expectedResponse']['header'] = $expectedResponseHeaderResolver->resolve(

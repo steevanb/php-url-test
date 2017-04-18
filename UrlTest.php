@@ -165,7 +165,7 @@ class UrlTest
                     }
                 }
 
-                if (in_array($headerName, $expectedResponse->getUnallowedHeaders())) {
+                if (in_array($headerName, $expectedResponse->getUnallowedHeaders() ?? [])) {
                     $this->isValid = false;
                 }
             }

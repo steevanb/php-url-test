@@ -48,7 +48,11 @@ class UrlTestService
         }
 
         Parser::registerFileFunction(dirname($fileName));
-        $configurations = (new Parser())->parse(file_get_contents($fileName));
+        try {
+            $configurations = (new Parser())->parse(file_get_contents($fileName));
+        } catch (\Exception $exception) {
+            throw new \Exception('[' . $fileName . '] ' . $exception->getMessage(), 0, $exception);
+        }
         if (is_array($configurations) === false) {
             throw new \Exception('Url test configuration file "' . $fileName . '" is malformed.');
         }
@@ -60,6 +64,7 @@ class UrlTestService
         }
 
         foreach ($configurations as $id => $data) {
+            $id = (string) $id;
             $urlTest = new UrlTest($id, $this->createConfiguration($data, $fileName, $id, $defaultConfiguration));
             $this
                 ->addTest($id, $urlTest)
@@ -86,15 +91,41 @@ class UrlTestService
         return $this;
     }
 
-    /** @return UrlTest[] */
-    public function getTests(): array
+    /**
+     * @param string[]|null $ids UrlTest identifiers string or preg pattern to retrieve
+     * @return UrlTest[]
+     */
+    public function getTests(array $ids = null): array
     {
-        return $this->tests;
+        if ($ids === null) {
+            $return = $this->tests;
+        } else {
+            $return = [];
+            foreach ($this->tests as $test) {
+                foreach ($ids as $id) {
+                    $isPreg = preg_match('/^[a-zA-Z0-9_]{1}$/', $id[0]) === 0;
+                    if ($isPreg) {
+                        $match = preg_match($id, $test->getId());
+                        if ($match === false) {
+                            throw new \Exception('Invalid UrlTest identifier preg pattern "' . $id . '".');
+                        }
+                        if ($match === 1) {
+                            $return[] = $test;
+                        }
+                    } elseif ($id === $test->getId()) {
+                        $return[] = $test;
+                    }
+                }
+            }
+        }
+
+        return $return;
     }
 
-    public function countTests(): int
+    /** @param string[]|null $ids UrlTest identifiers string or preg pattern to retrieve */
+    public function countTests(array $ids = null): int
     {
-        return count($this->tests);
+        return count($this->getTests($ids));
     }
 
     public function setParallelNumber(int $parallelNumber): self
@@ -133,15 +164,18 @@ class UrlTestService
         return $this->binAutoload;
     }
 
-    public function executeTests(): bool
+    /** @param string[]|null $ids UrlTest identifiers string or preg pattern to retrieve */
+    public function executeTests(array $ids = null): bool
     {
-        return ($this->getParallelNumber() > 1) ? $this->executeParallelTests() : $this->executeSequentialTests();
+        return ($this->getParallelNumber() > 1)
+            ? $this->executeParallelTests($ids)
+            : $this->executeSequentialTests($ids);
     }
 
-    protected function executeSequentialTests(): bool
+    protected function executeSequentialTests(array $ids = null): bool
     {
         $return = true;
-        foreach ($this->getTests() as $urlTest) {
+        foreach ($this->getTests($ids) as $urlTest) {
             $urlTest->execute();
 
             if (is_callable($this->getOnProgressCallback())) {
@@ -156,10 +190,10 @@ class UrlTestService
         return $return;
     }
 
-    protected function executeParallelTests(): bool
+    protected function executeParallelTests(array $ids = null): bool
     {
         $return = true;
-        $tests = $this->getTests();
+        $tests = $this->getTests($ids);
         $testIndex = 0;
 
         while (count($tests) > 0) {
@@ -221,7 +255,7 @@ class UrlTestService
         } catch (\Exception $exception) {
             throw new \Exception(
                 '[' . $fileName . '#' . $urlTestId . '] ' . $exception->getMessage(),
-                $exception->getCode(),
+                0,
                 $exception
             );
         }
