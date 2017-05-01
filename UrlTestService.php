@@ -9,6 +9,12 @@ use steevanb\PhpYaml\Parser;
 
 class UrlTestService
 {
+    /** @var string[] */
+    protected $directories = [];
+
+    /** @var string[] */
+    protected $files = [];
+
     /** @var UrlTest[] */
     protected $tests = [];
 
@@ -18,25 +24,19 @@ class UrlTestService
     /** @var int */
     protected $parallelNumber = 1;
 
-    /** @var ?string */
-    protected $binAutoload;
+    public function getDirectories(): array
+    {
+        return array_keys($this->directories);
+    }
+
+    public function getFiles(): array
+    {
+        return array_keys($this->files);
+    }
 
     public function addTestDirectory(string $directory, bool $recursive = true): self
     {
-        if (substr($directory, -1) !== DIRECTORY_SEPARATOR) {
-            $directory = $directory . DIRECTORY_SEPARATOR;
-        }
-        $handle = opendir($directory);
-        while (($entry = readdir($handle)) !== false) {
-            if ($entry === '.' || $entry === '..') {
-                continue;
-            }
-            if (is_dir($directory . $entry) && $recursive) {
-                $this->addTestDirectory($directory . $entry);
-            } elseif (is_file($directory. $entry) && substr($entry, -12) === '.urltest.yml') {
-                $this->addTestFile($directory . $entry);
-            }
-        }
+        $this->addTestDirectoryAndRegisterDirectory($directory, $recursive);
 
         return $this;
     }
@@ -46,6 +46,7 @@ class UrlTestService
         if (file_exists($fileName) === false) {
             throw new \Exception('UrlTest file "' . $fileName . '" does not exists.');
         }
+        $this->files[$fileName] = null;
 
         Parser::registerFileFunction(dirname($fileName));
         try {
@@ -152,24 +153,39 @@ class UrlTestService
         return $this->onProgressCallback;
     }
 
-    public function setBinAutoload(?string $autoload): self
-    {
-        $this->binAutoload = $autoload;
-
-        return $this;
-    }
-
-    public function getBinAutoload(): ?string
-    {
-        return $this->binAutoload;
-    }
-
     /** @param string[]|null $ids UrlTest identifiers string or preg pattern to retrieve */
     public function executeTests(array $ids = null): bool
     {
         return ($this->getParallelNumber() > 1)
             ? $this->executeParallelTests($ids)
             : $this->executeSequentialTests($ids);
+    }
+
+    public function addTestDirectoryAndRegisterDirectory(
+        string $directory,
+        bool $recursive = true,
+        bool $register = true
+    ): self {
+        if (substr($directory, -1) !== DIRECTORY_SEPARATOR) {
+            $directory = $directory . DIRECTORY_SEPARATOR;
+        }
+        if ($register) {
+            $this->directories[$directory] = null;
+        }
+
+        $handle = opendir($directory);
+        while (($entry = readdir($handle)) !== false) {
+            if ($entry === '.' || $entry === '..') {
+                continue;
+            }
+            if (is_dir($directory . $entry) && $recursive) {
+                $this->addTestDirectoryAndRegisterDirectory($directory . $entry, true, false);
+            } elseif (is_file($directory. $entry) && substr($entry, -12) === '.urltest.yml') {
+                $this->addTestFile($directory . $entry);
+            }
+        }
+
+        return $this;
     }
 
     protected function executeSequentialTests(array $ids = null): bool
@@ -251,7 +267,7 @@ class UrlTestService
         Configuration $defaultConfiguration = null
     ): Configuration {
         try {
-            $return = Configuration::create($data, $defaultConfiguration);
+            $return = Configuration::create($urlTestId, $data, $defaultConfiguration);
         } catch (\Exception $exception) {
             throw new \Exception(
                 '[' . $fileName . '#' . $urlTestId . '] ' . $exception->getMessage(),

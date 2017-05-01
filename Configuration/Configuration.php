@@ -8,9 +8,10 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class Configuration
 {
-    public static function create(array $configuration, Configuration $defaultConfiguration = null): self
+    public static function create(string $id, array $configuration, Configuration $defaultConfiguration = null): self
     {
         $return = new static();
+        $return->setId($id);
         static::resolve($configuration, $defaultConfiguration);
 
         $return
@@ -160,6 +161,9 @@ class Configuration
         $data['response']['body'] = $responseBodyResolver->resolve($data['response']['body']);
     }
 
+    /** @var string */
+    protected $id;
+
     /** @var Request */
     protected $request;
 
@@ -170,6 +174,18 @@ class Configuration
     {
         $this->request = new Request();
         $this->response = new Response($this);
+    }
+
+    public function setId(?string $id): self
+    {
+        $this->id = $id;
+
+        return $this;
+    }
+
+    public function getId(): ?string
+    {
+        return $this->id;
     }
 
     public function getRequest(): Request

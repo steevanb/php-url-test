@@ -1,3 +1,7 @@
+### [0.0.4](../../compare/0.0.3...0.0.4) - 2017-01-05
+
+- Add --dump-configuration to bin/urltest.php
+
 ### [0.0.3](../../compare/0.0.2...0.0.3) - 2017-18-04
 
 - Console error comparator by default

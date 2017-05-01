@@ -21,6 +21,8 @@ use steevanb\PhpUrlTest\{
 
 class UrlTestCommand extends Command
 {
+    use CreateUrlTestService;
+
     /** @var ProgressBar */
     protected $progressBar;
 
@@ -46,8 +48,7 @@ class UrlTestCommand extends Command
         parent::configure();
 
         $this
-            ->setName('urltest')
-            ->addOption('autoload', null, InputOption::VALUE_OPTIONAL, 'Set autoload file name.', null)
+            ->setName('urltest:test')
             ->addOption('parallel', 'p', InputOption::VALUE_OPTIONAL, 'Set parallel tests number.', 1)
             ->addOption(
                 'comparator',
@@ -70,15 +71,12 @@ class UrlTestCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $service = new UrlTestService();
-
-        $this->definePath($service, $input->getArgument('path'), $input->getOption('recursive') === 'true');
-        $service->setParallelNumber(intval($input->getOption('parallel')));
-
         $ids = $input->getArgument('ids') === null ? null : explode(',', $input->getArgument('ids'));
-        if ($service->countTests($ids) === 0) {
-            throw new \Exception('No test found.');
-        }
+        $service = $this->createFilteredIdsUrlTestService(
+            $input->getArgument('path'),
+            $input->getOption('recursive') === 'true',
+            $ids
+        );
 
         $this->initProgressBar($output, $service, $ids, $input->getOption('progress') === 'true');
         $return = $service->executeTests($ids) === true ? 0 : 1;
