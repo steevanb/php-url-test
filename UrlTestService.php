@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace steevanb\PhpUrlTest;
 
-use steevanb\PhpUrlTest\Configuration\Configuration;
 use steevanb\PhpYaml\Parser;
+use steevanb\PhpUrlTest\Configuration\Configuration;
 
 class UrlTestService
 {
@@ -18,11 +18,20 @@ class UrlTestService
     /** @var UrlTest[] */
     protected $tests = [];
 
+    /** @var string[] */
+    protected $skippedTests = [];
+
     /** @var ?callable */
     protected $onProgressCallback;
 
     /** @var int */
     protected $parallelNumber = 1;
+
+    /** @var bool */
+    protected $stopOnError = false;
+
+    /** @var ?array */
+    protected $continueData;
 
     public function getDirectories(): array
     {
@@ -32,6 +41,18 @@ class UrlTestService
     public function getFiles(): array
     {
         return array_keys($this->files);
+    }
+
+    public function setStopOnError(bool $stop)
+    {
+        $this->stopOnError = $stop;
+
+        return $this;
+    }
+
+    public function isStopOnError(): bool
+    {
+        return $this->stopOnError;
     }
 
     public function addTestDirectory(string $directory, bool $recursive = true): self
@@ -96,13 +117,20 @@ class UrlTestService
      * @param string[]|null $ids UrlTest identifiers string or preg pattern to retrieve
      * @return UrlTest[]
      */
-    public function getTests(array $ids = null): array
+    public function getTests(array $ids = null, bool $skipSkipped = true): array
     {
-        if ($ids === null) {
-            $return = $this->tests;
-        } else {
-            $return = [];
-            foreach ($this->tests as $test) {
+        $return = [];
+        $skipped = ($skipSkipped) ? $this->getSkippedTests() : [];
+        foreach ($this->tests as $test) {
+            foreach ($skipped as $skip) {
+                if ($skip->getId() === $test->getId()) {
+                    continue 2;
+                }
+            }
+
+            if ($ids === null) {
+                $return[] = $test;
+            } else {
                 foreach ($ids as $id) {
                     $isPreg = preg_match('/^[a-zA-Z0-9_]{1}$/', $id[0]) === 0;
                     if ($isPreg) {
@@ -123,10 +151,102 @@ class UrlTestService
         return $return;
     }
 
+    public function addSkippedTest(string $id): self
+    {
+        $this->skippedTests[] = $id;
+
+        return $this;
+    }
+
+    public function getSkippedTests()
+    {
+        return $this->getTests($this->skippedTests, false);
+    }
+
+    public function isSkippedTest(string $id): bool
+    {
+        $return = false;
+        foreach ($this->getSkippedTests() as $skippedTest) {
+            if ($skippedTest->getId() === $id) {
+                $return = true;
+                break;
+            }
+        }
+
+        return $return;
+    }
+
+    public function countSkippedTests(): int
+    {
+        return count($this->getSkippedTests());
+    }
+
     /** @param string[]|null $ids UrlTest identifiers string or preg pattern to retrieve */
     public function countTests(array $ids = null): int
     {
         return count($this->getTests($ids));
+    }
+
+    /** @return UrlTest[] */
+    public function getFailedTests(): array
+    {
+        $return = [];
+        foreach ($this->getTests() as $urlTest) {
+            if (
+                ($urlTest->isExecuted() && $urlTest->isValid() === false)
+                || in_array($urlTest->getId(), $this->continueData['failed'])
+            ) {
+                $return[] = $urlTest;
+            }
+        }
+
+        return $return;
+    }
+
+    public function countFailTests(): int
+    {
+        return count($this->getFailedTests());
+    }
+
+    /** @return UrlTest[] */
+    public function getSuccessTests(): array
+    {
+        $return = [];
+        foreach ($this->getTests() as $urlTest) {
+            if (
+                ($urlTest->isExecuted() && $urlTest->isValid())
+                || in_array($urlTest->getId(), $this->continueData['success'])
+            ) {
+                $return[] = $urlTest;
+            }
+        }
+
+        return $return;
+    }
+
+    public function countSuccessTests(): int
+    {
+        return count($this->getSuccessTests());
+    }
+
+    public function isAllTestsExecuted(): bool
+    {
+        $return = true;
+        foreach ($this->getTests() as $urlTest) {
+            if (
+                $this->isSkippedTest($urlTest->getId())
+                || in_array($urlTest->getId(), $this->continueData['success'])
+                || in_array($urlTest->getId(), $this->continueData['failed'])
+            ) {
+                continue;
+            }
+            if ($urlTest->isExecuted() === false) {
+                $return = false;
+                break;
+            }
+        }
+
+        return $return;
     }
 
     public function setParallelNumber(int $parallelNumber): self
@@ -153,9 +273,73 @@ class UrlTestService
         return $this->onProgressCallback;
     }
 
+    public function setContinue(bool $continue = true, bool $skip = false): self
+    {
+        foreach ($this->getTests() as $urlTest) {
+            if ($urlTest->isExecuted()) {
+                throw new \Exception(
+                    'Can\'t change continue because test "' . $urlTest->getId() . '" is alreayd executed.'
+                );
+            }
+        }
+
+        if ($continue) {
+            $continueFilePath = $this->getContinueFilePath();
+            if (is_readable($continueFilePath) === false) {
+                throw new \Exception(
+                    'Continue file  "' . $continueFilePath . '" does not exist or is not readable. '
+                    . 'Maybe your last tests was not stop by a fail ?'
+                );
+            }
+            $this->continueData = require($continueFilePath);
+
+            foreach ($this->continueData['skipped'] as $id) {
+                if (count($this->getTests([$id])) === 0) {
+                    throw new \Exception('Skipped test "' . $id . '" does not exist.');
+                }
+                $this->addSkippedTest($id);
+            }
+
+            foreach ($this->continueData['success'] as $id) {
+                $tests = $this->getTests([$id]);
+                if (count($tests) === 0) {
+                    throw new \Exception('Successfull test "' . $id . '" does not exist.');
+                }
+                $tests[0]->setValid(true);
+            }
+
+            foreach ($this->continueData['failed'] as $id) {
+                $tests = $this->getTests([$id]);
+                if (count($tests) === 0) {
+                    throw new \Exception('Failed test "' . $id . '" does not exist.');
+                }
+                $tests[0]->setValid(false);
+            }
+
+            if ($skip && $this->continueData['current'] !== null) {
+                $this->addSkippedTest($this->continueData['current']);
+            }
+        } else {
+            $this->continueData = ['skipped' => [], 'success' => [], 'failed' => [], 'current' => null];
+            foreach ($this->getSuccessTests() as $urlTest) {
+                $urlTest->setValid(null);
+            }
+            foreach ($this->getFailedTests() as $urlTest) {
+                $urlTest->setValid(null);
+            }
+        }
+
+        return $this;
+    }
+
     /** @param string[]|null $ids UrlTest identifiers string or preg pattern to retrieve */
     public function executeTests(array $ids = null): bool
     {
+        $continueFilePath = $this->getContinueFilePath();
+        if (file_exists($continueFilePath)) {
+            unlink($continueFilePath);
+        }
+
         return ($this->getParallelNumber() > 1)
             ? $this->executeParallelTests($ids)
             : $this->executeSequentialTests($ids);
@@ -192,6 +376,15 @@ class UrlTestService
     {
         $return = true;
         foreach ($this->getTests($ids) as $urlTest) {
+            if (
+                $urlTest->getId() !== $this->continueData['current']
+                && (
+                    in_array($urlTest->getId(), $this->continueData['success'])
+                    || in_array($urlTest->getId(), $this->continueData['failed'])
+                )
+            ) {
+                continue;
+            }
             $urlTest->execute();
 
             if (is_callable($this->getOnProgressCallback())) {
@@ -200,6 +393,10 @@ class UrlTestService
 
             if ($urlTest->isValid() === false) {
                 $return = false;
+                if ($this->isStopOnError()) {
+                    $this->saveContinueData($urlTest);
+                    break;
+                }
             }
         }
 
@@ -245,6 +442,43 @@ class UrlTestService
         }
 
         return $return;
+    }
+
+    protected function saveContinueData(UrlTest $current): self
+    {
+        $this->continueData['current'] = $current->getId();
+
+        foreach ($this->getSkippedTests() as $urlTest) {
+            if (in_array($urlTest->getId(), $this->continueData['skipped']) === false) {
+                $this->continueData['skipped'][] = $urlTest->getId();
+            }
+        }
+
+        foreach ($this->getSuccessTests() as $urlTest) {
+            if (in_array($urlTest->getId(), $this->continueData['success']) === false) {
+                $this->continueData['success'][] = $urlTest->getId();
+            }
+        }
+
+        foreach ($this->getFailedTests() as $urlTest) {
+            if (
+                $current->getId() !== $urlTest->getId()
+                && in_array($urlTest->getId(), $this->continueData['failed']) === false
+            ) {
+                $this->continueData['failed'][] = $urlTest->getId();
+            }
+        }
+
+        $content = '<?php' . "\n";
+        $content .= 'return ' . var_export($this->continueData, true) . ';';
+        file_put_contents($this->getContinueFilePath(), $content);
+
+        return $this;
+    }
+
+    protected function getContinueFilePath(): string
+    {
+        return sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'urltest.continue';
     }
 
     protected function addResponseBodyTransformer(?string $bodyTransformer, UrlTest $urlTest): self

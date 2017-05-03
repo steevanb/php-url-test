@@ -81,22 +81,24 @@ class ResponseComparatorService
         $comparator = $this->getComparator($comparatorId);
         $errorComparator = $this->getErrorComparator($errorComparatorId);
 
-        if (
-            (
-                $urlTest->isValid()
-                && $comparator instanceof ResponseComparatorInterface
-            ) || (
+        if ($urlTest->isExecuted()) {
+            if (
+                (
+                    $urlTest->isValid()
+                    && $comparator instanceof ResponseComparatorInterface
+                ) || (
+                    $urlTest->isValid() === false
+                    && $comparator instanceof ResponseComparatorInterface
+                    && $errorComparator === null
+                )
+            ) {
+                $comparator->compare($urlTest, $verbosity);
+            } elseif (
                 $urlTest->isValid() === false
-                && $comparator instanceof ResponseComparatorInterface
-                && $errorComparator === null
-            )
-        ) {
-            $comparator->compare($urlTest, $verbosity);
-        } elseif (
-            $urlTest->isValid() === false
-            && $errorComparator instanceof ResponseComparatorInterface
-        ) {
-            $errorComparator->compare($urlTest, $verbosity);
+                && $errorComparator instanceof ResponseComparatorInterface
+            ) {
+                $errorComparator->compare($urlTest, $verbosity);
+            }
         }
 
         return $this;

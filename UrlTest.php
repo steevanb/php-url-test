@@ -22,7 +22,7 @@ class UrlTest
     protected $response;
 
     /** @var ?bool */
-    protected $isValid;
+    protected $valid;
 
     /** @var ResponseBodyTransformerInterface[] */
     protected $responseBodyTransformers = [];
@@ -140,16 +140,28 @@ class UrlTest
         return $transformer !== null ? $this->getResponseBodyTransformer($transformer)->transform($content) : $content;
     }
 
+    public function isExecuted(): bool
+    {
+        return $this->getResponse() instanceof Response;
+    }
+
+    public function setValid(?bool $valid): self
+    {
+        $this->valid = $valid;
+
+        return $this;
+    }
+
     public function isValid(): bool
     {
-        if ($this->getResponse() instanceof Response === false) {
-            throw new \Exception('You must call execute() before isValid().');
-        }
+        if ($this->valid === null) {
+            if ($this->isExecuted() === false) {
+                throw new \Exception('Test is not executed.');
+            }
 
-        if ($this->isValid === null) {
             $request = $this->getConfiguration()->getRequest();
             $expectedResponse = $this->getConfiguration()->getResponse();
-            $this->isValid = true;
+            $this->valid = true;
             $this->compare($expectedResponse->getUrl(), $this->getResponse()->getUrl());
             $this->compare($expectedResponse->getCode(), $this->getResponse()->getCode());
             $this->compare($expectedResponse->getNumConnects(), $this->getResponse()->getNumConnects());
@@ -160,13 +172,13 @@ class UrlTest
             foreach ($this->getResponse()->getHeaders() ?? [] as $headerName => $headerValue) {
                 foreach ($expectedResponse->getHeaders() as $allowedHeaderName => $allowedHeaderValue) {
                     if ($allowedHeaderName === $headerName && (string) $allowedHeaderValue !== $headerValue) {
-                        $this->isValid = false;
+                        $this->valid = false;
                         break;
                     }
                 }
 
                 if (in_array($headerName, $expectedResponse->getUnallowedHeaders() ?? [])) {
-                    $this->isValid = false;
+                    $this->valid = false;
                 }
             }
             $responseHeaderNames = array_keys($this->getResponse()->getHeaders());
@@ -176,7 +188,7 @@ class UrlTest
                     in_array($headerName, $responseHeaderNames) === false
                     || (string) $headerValue !== $responseHeaderValues[$headerName]
                 ) {
-                    $this->isValid = false;
+                    $this->valid = false;
                 }
             }
 
@@ -191,7 +203,7 @@ class UrlTest
             $this->compare($expectedBody, $responseBody);
             $this->compare($expectedResponse->getBodySize(), $this->getResponse()->getBodySize());
             if ($request->isAllowRedirect() === false && $this->getResponse()->getCode() === 302) {
-                $this->isValid = false;
+                $this->valid = false;
             } elseif ($request->isAllowRedirect()) {
                 $this->compare($expectedResponse->getRedirectCount(), $this->getResponse()->getRedirectCount());
                 if (
@@ -203,12 +215,12 @@ class UrlTest
                         && $expectedResponse->getRedirectMax() < $this->getResponse()->getRedirectCount()
                     )
                 ) {
-                    $this->isValid = false;
+                    $this->valid = false;
                 }
             }
         }
 
-        return $this->isValid;
+        return $this->valid;
     }
 
     protected function defineCurlOptions($curl): self
@@ -239,7 +251,7 @@ class UrlTest
     protected function compare($expected, $value): self
     {
         if ($expected !== null && $expected !== $value) {
-            $this->isValid = false;
+            $this->valid = false;
         }
 
         return $this;

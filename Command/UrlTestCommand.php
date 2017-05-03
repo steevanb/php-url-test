@@ -27,23 +27,22 @@ class UrlTestCommand extends Command
     protected $progressBar;
 
     /** @var int */
+    protected $urlTestSkipped = 0;
+
+    /** @var int */
     protected $urlTestSuccess = 0;
 
     /** @var int */
-    protected $urlTestFail = 0;
+    protected $urlTestFailed = 0;
 
-    public function onProgress(UrlTest $urlTest)
+    public function onProgress(UrlTest $urlTest): void
     {
-        $urlTest->isValid() ? $this->urlTestSuccess++ : $this->urlTestFail++;
-        $message = "\e[42m\e[1;37m " . $this->urlTestSuccess ." \e[00m";
-        if ($this->urlTestFail > 0) {
-            $message .= " \e[41m\e[1;37m " . $this->urlTestFail ." \e[00m";
-        }
-        $this->progressBar->setMessage($message);
+        $urlTest->isValid() ? $this->urlTestSuccess++ : $this->urlTestFailed++;
         $this->progressBar->advance();
+        $this->defineProgressBarMessage();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         parent::configure();
 
@@ -65,22 +64,28 @@ class UrlTestCommand extends Command
             )
             ->addOption('progress', null, InputOption::VALUE_OPTIONAL, 'Show/hide progress bar.', 'true')
             ->addOption('recursive', 'r', InputOption::VALUE_OPTIONAL, 'Set recursive if path is a directory.', 'true')
+            ->addOption('stop-on-error', null, InputOption::VALUE_NONE, 'Stop when a test fail.')
+            ->addOption('continue', null, InputOption::VALUE_NONE, 'Start since last fail test.')
+            ->addOption('skip', null, InputOption::VALUE_NONE, 'Skip last fail test, use it with --continue.')
             ->addArgument('path', InputArgument::REQUIRED, 'Configuration file name, or directories separated by ",".')
             ->addArgument('ids', InputArgument::OPTIONAL, 'UrlTest identifiers preg pattern to test.');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $ids = $input->getArgument('ids') === null ? null : explode(',', $input->getArgument('ids'));
-        $service = $this->createFilteredIdsUrlTestService(
-            $input->getArgument('path'),
-            $input->getOption('recursive') === 'true',
-            $ids
-        );
+        $service = $this
+            ->createFilteredIdsUrlTestService(
+                $input->getArgument('path'),
+                $input->getOption('recursive') === 'true',
+                $ids
+            )
+            ->setStopOnError($input->getOption('stop-on-error'))
+            ->setContinue($input->getOption('continue'), $input->getOption('skip'));
 
         $this->initProgressBar($output, $service, $ids, $input->getOption('progress') === 'true');
         $return = $service->executeTests($ids) === true ? 0 : 1;
-        $this->finishProgressBar();
+        $this->finishProgressBar($service);
 
         if ($input->getOption('parallel') <= 1) {
             $this->compareResponses(
@@ -88,6 +93,14 @@ class UrlTestCommand extends Command
                 $input->getOption('comparator'),
                 $input->getOption('errorcomparator'),
                 $output
+            );
+        }
+
+        if ($service->isAllTestsExecuted() === false) {
+            $output->writeln('');
+            $output->writeln(
+                "\e[43m\e[1;30m Tests stopped, use --continue to resume since last fail, "
+                . "or --skip to resume after last fail. \e[00m"
             );
         }
 
@@ -171,18 +184,52 @@ class UrlTestCommand extends Command
             $this->progressBar->setFormat(
                 '[%bar%] %current%/%max% %message% | %elapsed:6s%/%estimated:-6s% | %memory:6s%' . "\n"
             );
-            $this->progressBar->setMessage("\e[42m\e[1;37m 0 \e[00m");
             $this->progressBar->start();
+
+            $this->addSkippedTest($service->countSkippedTests());
+            foreach ($service->getSuccessTests() as $urlTest) {
+                $this->onProgress($urlTest);
+            }
+            foreach ($service->getFailedTests() as $urlTest) {
+                $this->onProgress($urlTest);
+            }
+
             $service->setOnProgressCallback([$this, 'onProgress']);
         }
 
         return $this;
     }
 
-    protected function finishProgressBar(): self
+    protected function finishProgressBar(UrlTestService $urlTestService): self
+    {
+        if ($this->progressBar instanceof ProgressBar && $urlTestService->isAllTestsExecuted()) {
+            $this->progressBar->finish();
+        }
+
+        return $this;
+    }
+
+    protected function addSkippedTest(int $count = 1): self
+    {
+        $this->urlTestSkipped += $count;
+        $this->defineProgressBarMessage();
+
+        return $this;
+    }
+
+    protected function defineProgressBarMessage(): self
     {
         if ($this->progressBar instanceof ProgressBar) {
-            $this->progressBar->finish();
+            $message = null;
+            if ($this->urlTestSkipped > 0) {
+                $message .= "\e[43m\e[1;30m " . $this->urlTestSkipped . " \e[00m ";
+            }
+            $message .= "\e[42m\e[1;37m " . $this->urlTestSuccess . " \e[00m";
+            if ($this->urlTestFailed > 0) {
+                $message .= " \e[41m\e[1;37m " . $this->urlTestFailed . " \e[00m";
+            }
+            $this->progressBar->setMessage($message);
+            $this->progressBar->display();
         }
 
         return $this;

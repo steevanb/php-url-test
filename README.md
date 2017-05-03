@@ -1,5 +1,5 @@
-[![version](https://img.shields.io/badge/alpha-0.0.4-red.svg)](https://github.com/steevanb/php-url-test/tree/0.0.4)
-![Lines](https://img.shields.io/badge/code%20lines-2530-green.svg)
+[![version](https://img.shields.io/badge/alpha-0.0.5-red.svg)](https://github.com/steevanb/php-url-test/tree/0.0.5)
+![Lines](https://img.shields.io/badge/code%20lines-2861-green.svg)
 ![Total Downloads](https://poser.pugx.org/steevanb/php-url-test/downloads)
 
 php-url-test
@@ -7,19 +7,19 @@ php-url-test
 
 Tests all urls of your application
 
+![Url test](example.jpg)
+
 [Changelog](changelog.md)
 
-Installation
-============
+### Installation
 
 /!\ Keep in mind this is an alpha version /!\
 
 ```bash
-composer require "steevanb/php-url-test": "^0.0"
+composer require "steevanb/php-url-test": "^0.0.5"
 ```
 
-Launch tests
-============
+### Launch tests
 
 ```bash
 # scan src/ to find *.urltest.yml files, --recursive=true or -r=true to do it recursively
@@ -31,18 +31,36 @@ Launch tests
 # test url_test_foo and all tests who match preg pattern /^url_test_bar[0..9]{1,}$/
 ./bin/urltest.php src/ url_test_foo,/^url_test_bar[0..9]{1,}$/
 
-# launch tests in foo.urltest.yml only
+# launch tests from foo.urltest.yml only
 ./bin/urltest.php src/Tests/foo.urltest.yml
-
-# use ConsoleResponseComparator to show test comparison, use -v, -vv or -vvv to get more informations
-# use ConsoleResponseComparator to show only fail test comparison (by default), use -v, -vv or -vvv to get more informations
-./bin/urltest.php --comparator=console --errorcomparator=console src/
 ```
 
-![Url test](example.jpg)
+### Show success or fail informations
 
-Dump configuration
-==================
+```bash
+# show test comparison (success + fail), use -v, -vv or -vvv to get more informations
+--comparator=console
+
+# show only fail test comparison (by default), use -v, -vv or -vvv to get more informations
+--errorcomparator=console
+```
+
+### Stop on error and resume your tests
+
+You have 3 parameters to stop tests when a test fail, and resume tests from the one who fail, or skip it and continue after this one :
+
+```bash
+# stop when a test fail
+--stop-on-error
+
+# when a test fail, continue testing since the one who fail (do not re-test previous ones)
+--continue
+
+# used with --continue, skip last fail test, and continue testing after this one (do not re-test previous ones)
+--skip
+```
+
+### Dump configuration
 
 ```bash
 # dump only global configuration
@@ -55,8 +73,7 @@ Dump configuration
 ./bin/urltest.php --dump-configuration src/ url_test_foo,/^url_test_bar[0..9]{1,}$/
 ```
 
-YAML test file example
-======================
+### YAML test file example
 
 Only _request.url_ is required.
 
