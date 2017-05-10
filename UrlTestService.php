@@ -287,8 +287,8 @@ class UrlTestService
             $continueFilePath = $this->getContinueFilePath();
             if (is_readable($continueFilePath) === false) {
                 throw new \Exception(
-                    'Continue file  "' . $continueFilePath . '" does not exist or is not readable. '
-                    . 'Maybe your last tests was not stop by a fail ?'
+                    'Continue file "' . $continueFilePath . '" does not exist or is not readable. '
+                    . 'Maybe your last tests was not stopped by a fail ?'
                 );
             }
             $this->continueData = require($continueFilePath);
@@ -486,8 +486,10 @@ class UrlTestService
         if (
             $bodyTransformer !== null
             && $urlTest->hasResponseBodyTransformer($bodyTransformer) === false
-            && class_exists($bodyTransformer)
         ) {
+            if (class_exists($bodyTransformer) === false) {
+                throw new \Exception('Body transformer class "' . $bodyTransformer . '" not found.');
+            }
             $urlTest->addResponseBodyTransformer($bodyTransformer, new $bodyTransformer());
         }
 
