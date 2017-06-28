@@ -121,6 +121,7 @@ class UrlTestService
     {
         $return = [];
         $skipped = ($skipSkipped) ? $this->getSkippedTests() : [];
+        ksort($this->tests);
         foreach ($this->tests as $test) {
             foreach ($skipped as $skip) {
                 if ($skip->getId() === $test->getId()) {
