@@ -1,3 +1,8 @@
+### [0.0.6](../../compare/0.0.5...0.0.6) - 2017-07-03
+
+- Trow exception when body transformer class not found
+- Sort tests by id on UrlTestService::addTest()
+
 ### [0.0.5](../../compare/0.0.4...0.0.5) - 2017-05-03
 
 - Add UrlTestService::addSkippedTest(), UrlTestService::getSkippedTests(), UrlTestService::isSkippedTest() and UrlTestService::countSkippedTests()

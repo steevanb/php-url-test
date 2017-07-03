@@ -109,6 +109,7 @@ class UrlTestService
             throw new \Exception('UrlTest id "' . $id . '" already exists.');
         }
         $this->tests[$id] = $urlTest;
+        ksort($this->tests);
 
         return $this;
     }
