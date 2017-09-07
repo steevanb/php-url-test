@@ -3,8 +3,10 @@
 
 declare(strict_types=1);
 
-use steevanb\PhpUrlTest\Command\DumpConfigurationCommand;
-use steevanb\PhpUrlTest\Command\UrlTestCommand;
+use steevanb\PhpUrlTest\{
+    Command\DumpConfigurationCommand,
+    Command\UrlTestCommand
+};
 use Symfony\Component\Console\Application;
 
 requireAutoload();
@@ -47,8 +49,8 @@ function createCommand()
     $return = null;
     foreach ($_SERVER['argv'] as $index => $arg) {
         if ($arg === '--dump-configuration') {
-            $return = new DumpConfigurationCommand();
             unset($_SERVER['argv'][$index]);
+            $return = new DumpConfigurationCommand();
             break;
         }
     }

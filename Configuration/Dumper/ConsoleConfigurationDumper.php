@@ -14,16 +14,14 @@ use steevanb\PhpUrlTest\{
     UrlTestService
 };
 
-class ConsoleConfigurationDumper implements ConfigurationDumperInterface
+class ConsoleConfigurationDumper
 {
     /** @var OutputInterface */
     protected $output;
 
-    public function setOutput(OutputInterface $output): self
+    public function __construct(OutputInterface $output)
     {
         $this->output = $output;
-
-        return $this;
     }
 
     public function dumpGlobal(UrlTestService $urlTestService, ?array $ids): self
@@ -39,6 +37,23 @@ class ConsoleConfigurationDumper implements ConfigurationDumperInterface
             ->writeArrayConfiguration($table, 'Directory', 'Directories', $urlTestService->getDirectories())
             ->writeArrayConfiguration($table, 'File', 'Files', $urlTestService->getFiles());
         $table->render();
+
+        if ($this->output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
+            $this->output->writeln('');
+            $countTests = $urlTestService->countTests();
+            $this->writeHeader($countTests <= 1 ? $countTests . ' test' : $countTests . ' tests');
+            $table = new Table($this->output);
+            $table->setHeaders(['', 'Id', 'Method', 'Url']);
+            foreach ($urlTestService->getTests() as $index => $urlTest) {
+                $table->addRow([
+                    '#' . ($index + 1),
+                    $urlTest->getId(),
+                    $urlTest->getConfiguration()->getRequest()->getMethod(),
+                    $urlTest->getConfiguration()->getRequest()->getUrl()
+                ]);
+            }
+            $table->render();
+        }
 
         if (count($ids ?? []) > 0) {
             $this->output->writeln('');
@@ -75,7 +90,7 @@ class ConsoleConfigurationDumper implements ConfigurationDumperInterface
 
         if ($request->getPostData() !== null) {
             $this->output->writeln('');
-            $this->output->writeln('Request post data: ');
+            $this->output->writeln('Request post data:');
             $this->output->writeln($request->getPostData());
         }
 
@@ -97,15 +112,18 @@ class ConsoleConfigurationDumper implements ConfigurationDumperInterface
             ->writeConfiguration($table, 'Body comparison transformer', $response->getBodyTransformerName())
             ->writeConfiguration($table, 'Body comparison file name', $response->getBodyFileName())
             ->writeResponseRedirectionConfiguration($table, $urlTest->getConfiguration());
-        $table->render();
-
         $expectedBody = $urlTest->getTransformedBody(
             $response->getBody(),
             $response->getBodyTransformerName()
         );
-        if ($expectedBody !== null) {
+        if ($expectedBody !== null && $this->output->getVerbosity() <= OutputInterface::VERBOSITY_NORMAL) {
+            $this->writeConfiguration($table, 'Body', '<comment>Add -v to show body.</comment>');
+        }
+        $table->render();
+
+        if ($expectedBody !== null && $this->output->getVerbosity() > OutputInterface::VERBOSITY_VERBOSE) {
             $this->output->writeln('');
-            $this->output->writeln('Response body: ');
+            $this->output->writeln('Response body:');
             $this->output->writeln($expectedBody);
         }
     }

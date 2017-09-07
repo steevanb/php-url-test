@@ -12,7 +12,7 @@
         "symfony/console": "^3.2",
         "symfony/options-resolver": "^3.2"
     },
-    "bin": ["bin/urltest.php"],
+    "bin": ["bin/urltest"],
     "repositories": [
         {
             "type": "vcs",

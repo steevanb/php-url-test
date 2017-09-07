@@ -78,14 +78,15 @@ class UrlTestService
         if (is_array($configurations) === false) {
             throw new \Exception('Url test configuration file "' . $fileName . '" is malformed.');
         }
-        if (array_key_exists('_default', $configurations)) {
-            $defaultConfiguration = $this->createConfiguration($configurations['_default'], $fileName, '_default');
-            unset($configurations['_default']);
+        if (array_key_exists('_defaults', $configurations)) {
+            $defaultConfiguration = $this->createConfiguration($configurations['_defaults'], $fileName, '_defaults');
+            unset($configurations['_defaults']);
         } else {
             $defaultConfiguration = new Configuration();
         }
 
         foreach ($configurations as $id => $data) {
+            $this->assertTestId($id);
             $id = (string) $id;
             $urlTest = new UrlTest($id, $this->createConfiguration($data, $fileName, $id, $defaultConfiguration));
             $this
@@ -230,10 +231,11 @@ class UrlTestService
         return count($this->getSuccessTests());
     }
 
-    public function isAllTestsExecuted(): bool
+    /** @param string[]|null $ids UrlTest identifiers string or preg pattern to retrieve */
+    public function isAllTestsExecuted(array $ids = null): bool
     {
         $return = true;
-        foreach ($this->getTests() as $urlTest) {
+        foreach ($this->getTests($ids) as $urlTest) {
             if (
                 $this->isSkippedTest($urlTest->getId())
                 || in_array($urlTest->getId(), $this->continueData['success'])
@@ -373,6 +375,17 @@ class UrlTestService
         return $this;
     }
 
+    public function assertTestId(string $id): self
+    {
+        if (substr($id, 0, 1) === '_') {
+            throw new \Exception(
+                'UrlTest id "' . $id . '" should not begin with "_", it is reserved for configurations.'
+            );
+        }
+
+        return $this;
+    }
+
     protected function executeSequentialTests(array $ids = null): bool
     {
         $return = true;
@@ -423,7 +436,7 @@ class UrlTestService
                 $testIndex++;
                 $pipes = 'pipes' . $testIndex;
                 $process['process'] = proc_open(
-                    'php ' . __DIR__ . '/bin/urltest.php --comparator=console --progress=false ../test.urltest.yml',
+                    'php ' . __DIR__ . '/bin/urltest --comparator=console --progress=false ../test.urltest.yml',
                     [
                         0 => ["pipe", "r"],
                         1 => ["pipe", "w"],

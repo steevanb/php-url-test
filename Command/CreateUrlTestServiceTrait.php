@@ -6,7 +6,7 @@ namespace steevanb\PhpUrlTest\Command;
 
 use steevanb\PhpUrlTest\UrlTestService;
 
-trait CreateUrlTestService
+trait CreateUrlTestServiceTrait
 {
     protected function createFilteredIdsUrlTestService(string $path, bool $recursive, ?array $ids): UrlTestService
     {

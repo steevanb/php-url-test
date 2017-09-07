@@ -21,7 +21,7 @@ use steevanb\PhpUrlTest\{
 
 class UrlTestCommand extends Command
 {
-    use CreateUrlTestService;
+    use CreateUrlTestServiceTrait;
 
     /** @var ProgressBar */
     protected $progressBar;
@@ -85,7 +85,6 @@ class UrlTestCommand extends Command
 
         $this->initProgressBar($output, $service, $ids, $input->getOption('progress') === 'true');
         $return = $service->executeTests($ids) === true ? 0 : 1;
-        $this->finishProgressBar($service);
 
         if ($input->getOption('parallel') <= 1) {
             $this->compareResponses(
@@ -96,7 +95,7 @@ class UrlTestCommand extends Command
             );
         }
 
-        if ($service->isAllTestsExecuted() === false) {
+        if ($service->isAllTestsExecuted($ids) === false) {
             $output->writeln('');
             $output->writeln(
                 "\e[43m\e[1;30m Tests stopped, use --continue to resume since last fail, "
@@ -195,15 +194,6 @@ class UrlTestCommand extends Command
             }
 
             $service->setOnProgressCallback([$this, 'onProgress']);
-        }
-
-        return $this;
-    }
-
-    protected function finishProgressBar(UrlTestService $urlTestService): self
-    {
-        if ($this->progressBar instanceof ProgressBar && $urlTestService->isAllTestsExecuted()) {
-            $this->progressBar->finish();
         }
 
         return $this;

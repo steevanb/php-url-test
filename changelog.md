@@ -1,3 +1,10 @@
+### [0.0.7](../../compare/0.0.6...0.0.7) - 2017-09-07
+
+- [Bugfix #3](https://github.com/steevanb/php-url-test/issues/3) Rename _default to _defaults in _.urltest.yml_ files
+- [Bugfix #4](https://github.com/steevanb/php-url-test/issues/4) Fix _--stop-on-error_ alert shown when only one test passed
+- [Feature #5](https://github.com/steevanb/php-url-test/issues/5) Remove _.php_ from _bin/urltest.php_
+- [Project #5](https://github.com/steevanb/php-url-test/projects/5) Add verbose mode to --dump-configuration, to show tests list
+
 ### [0.0.6](../../compare/0.0.5...0.0.6) - 2017-07-03
 
 - Trow exception when body transformer class not found

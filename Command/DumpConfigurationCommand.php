@@ -15,7 +15,7 @@ use Symfony\Component\Console\{
 
 class DumpConfigurationCommand extends Command
 {
-    use CreateUrlTestService;
+    use CreateUrlTestServiceTrait;
 
     protected function configure()
     {
@@ -36,12 +36,10 @@ class DumpConfigurationCommand extends Command
             $input->getOption('recursive') === 'true'
         );
 
-        $dumper = new ConsoleConfigurationDumper();
-        $dumper->setOutput($output);
-        $dumper->dumpGlobal($service, $ids);
+        $dumper = (new ConsoleConfigurationDumper($output))->dumpGlobal($service, $ids);
         foreach ($service->getTests($ids ?? []) as $urlTest) {
             $output->writeln('');
-            $dumper->dump($urlTest);
+            $dumper->dump($urlTest, $output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE);
         }
 
         return 0;

@@ -1,5 +1,5 @@
-[![version](https://img.shields.io/badge/alpha-0.0.6-red.svg)](https://github.com/steevanb/php-url-test/tree/0.0.6)
-![Lines](https://img.shields.io/badge/code%20lines-2863-green.svg)
+[![version](https://img.shields.io/badge/alpha-0.0.7-red.svg)](https://github.com/steevanb/php-url-test/tree/0.0.7)
+![Lines](https://img.shields.io/badge/code%20lines-2896-green.svg)
 ![Total Downloads](https://poser.pugx.org/steevanb/php-url-test/downloads)
 
 php-url-test
@@ -16,23 +16,23 @@ Tests all urls of your application
 /!\ Keep in mind this is an alpha version /!\
 
 ```bash
-composer require "steevanb/php-url-test": "^0.0.6"
+composer require --dev "steevanb/php-url-test": "^0.0.7"
 ```
 
 ### Launch tests
 
 ```bash
 # scan src/ to find *.urltest.yml files, --recursive=true or -r=true to do it recursively
-./bin/urltest.php src/
+./bin/urltest src/
 
 # test url_test_foo
-./bin/urltest.php src/ url_test_foo
+./bin/urltest src/ url_test_foo
 
 # test url_test_foo and all tests who match preg pattern /^url_test_bar[0..9]{1,}$/
-./bin/urltest.php src/ url_test_foo,/^url_test_bar[0..9]{1,}$/
+./bin/urltest src/ url_test_foo,/^url_test_bar[0..9]{1,}$/
 
 # launch tests from foo.urltest.yml only
-./bin/urltest.php src/Tests/foo.urltest.yml
+./bin/urltest src/Tests/foo.urltest.yml
 ```
 
 ### Show success or fail informations
@@ -64,13 +64,13 @@ You have 3 parameters to stop tests when a test fail, and resume tests from the 
 
 ```bash
 # dump only global configuration
-./bin/urltest.php --dump-configuration src/
+./bin/urltest --dump-configuration src/
 
 # dump global configuration, and url_test_foo configuration
-./bin/urltest.php --dump-configuration src/ url_test_foo
+./bin/urltest --dump-configuration src/ url_test_foo
 
 # dump global configuration, url_test_foo configuration and all configurations who id match preg pattern /^url_test_bar[0..9]{1,}$/
-./bin/urltest.php --dump-configuration src/ url_test_foo,/^url_test_bar[0..9]{1,}$/
+./bin/urltest --dump-configuration src/ url_test_foo,/^url_test_bar[0..9]{1,}$/
 ```
 
 ### YAML test file example
@@ -127,7 +127,7 @@ testId:
 
 You can define default configurations for all tests in your _.urltest.yml_ file :
 ```yaml
-_default:
+_defaults:
     # here you can define sames configurations as for a test
     # this configurations will be applied to all tests in this file, if value is not defined, null or ~
 ```
