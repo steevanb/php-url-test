@@ -1,5 +1,5 @@
-[![version](https://img.shields.io/badge/alpha-0.0.7-red.svg)](https://github.com/steevanb/php-url-test/tree/0.0.7)
-![Lines](https://img.shields.io/badge/code%20lines-2896-green.svg)
+[![version](https://img.shields.io/badge/alpha-0.0.8-red.svg)](https://github.com/steevanb/php-url-test/tree/0.0.8)
+![Lines](https://img.shields.io/badge/code%20lines-3106-green.svg)
 ![Total Downloads](https://poser.pugx.org/steevanb/php-url-test/downloads)
 
 php-url-test
@@ -16,7 +16,7 @@ Tests all urls of your application
 /!\ Keep in mind this is an alpha version /!\
 
 ```bash
-composer require --dev "steevanb/php-url-test": "^0.0.7"
+composer require --dev "steevanb/php-url-test": "^0.0.8"
 ```
 
 ### Launch tests
@@ -34,6 +34,10 @@ composer require --dev "steevanb/php-url-test": "^0.0.7"
 # launch tests from foo.urltest.yml only
 ./bin/urltest src/Tests/foo.urltest.yml
 ```
+
+If _path_ (_src/_ in example) is a directory, urltest will try to find _urltest.yml_ global configuration file in this directory.
+
+You can specify a global configuration file in _path_, example : _src/myurltest.yml_
 
 ### Show success or fail informations
 
@@ -79,6 +83,10 @@ Only _request.url_ is required.
 
 ```yaml
 testId:
+    # if abstract = true, this test will not be launched. you can use it as default configuration with parent: testId in another test
+    abstract: false
+    # id of parent default configuration
+    parent: ~
     request:
         url: http://test.dev
         timeout: 30
@@ -130,4 +138,18 @@ You can define default configurations for all tests in your _.urltest.yml_ file 
 _defaults:
     # here you can define sames configurations as for a test
     # this configurations will be applied to all tests in this file, if value is not defined, null or ~
+```
+
+### Global configuration file
+
+You can define global configurations in _urltest.yml_.
+
+This configurations will be applied to all tests.
+
+```yaml
+# you can define tests here, or abstract tests to use it in all your tests
+urltest:
+    abstractTestId:
+        abstract: true
+        url: http://test.dev
 ```

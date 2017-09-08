@@ -22,7 +22,13 @@ trait CreateUrlTestServiceTrait
     {
         $return = new UrlTestService();
         if (is_dir($path)) {
+            $urltestFileName = trim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'urltest.yml';
+            if (file_exists($urltestFileName)) {
+                $return->setConfigurationFile($urltestFileName);
+            }
             $return->addTestDirectory($path, $recursive);
+        } elseif (is_file($path) && basename($path) === 'urltest.yml') {
+            $return->setConfigurationFile($path);
         } elseif (is_file($path)) {
             $return->addTestFile($path);
         } else {

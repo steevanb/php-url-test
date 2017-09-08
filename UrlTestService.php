@@ -18,6 +18,9 @@ class UrlTestService
     /** @var UrlTest[] */
     protected $tests = [];
 
+    /** @var array */
+    protected $abstractTests = [];
+
     /** @var string[] */
     protected $skippedTests = [];
 
@@ -32,6 +35,26 @@ class UrlTestService
 
     /** @var ?array */
     protected $continueData;
+
+    public function setConfigurationFile(string $fileName): self
+    {
+        Parser::registerFileFunction(dirname($fileName));
+        try {
+            $configurations = (new Parser())->parse(file_get_contents($fileName));
+        } catch (\Exception $exception) {
+            throw new \Exception('[' . $fileName . '] ' . $exception->getMessage(), 0, $exception);
+        }
+
+        foreach ($configurations['urltest'] ?? [] as $id => $configuration) {
+            if ($configuration['abstract'] ?? false === true) {
+                $this->addAbstractTest($id, $configuration);
+            } else {
+                $this->addTest($id, new UrlTest($id, $this->createConfiguration($configuration, $fileName, $id)));
+            }
+        }
+
+        return $this;
+    }
 
     public function getDirectories(): array
     {
@@ -79,26 +102,19 @@ class UrlTestService
             throw new \Exception('Url test configuration file "' . $fileName . '" is malformed.');
         }
         if (array_key_exists('_defaults', $configurations)) {
-            $defaultConfiguration = $this->createConfiguration($configurations['_defaults'], $fileName, '_defaults');
+            $defaultConfiguration = $configurations['_defaults'];
             unset($configurations['_defaults']);
         } else {
-            $defaultConfiguration = new Configuration();
+            $defaultConfiguration = [];
         }
 
         foreach ($configurations as $id => $data) {
             $this->assertTestId($id);
             $id = (string) $id;
-            $urlTest = new UrlTest($id, $this->createConfiguration($data, $fileName, $id, $defaultConfiguration));
-            $this
-                ->addTest($id, $urlTest)
-                ->addResponseBodyTransformer(
-                    $urlTest->getConfiguration()->getResponse()->getBodyTransformerName(),
-                    $urlTest
-                )
-                ->addResponseBodyTransformer(
-                    $urlTest->getConfiguration()->getResponse()->getRealResponseBodyTransformerName(),
-                    $urlTest
-                );
+            $this->addTest(
+                $id,
+                new UrlTest($id, $this->createConfiguration($data, $fileName, $id, $defaultConfiguration))
+            );
         }
 
         return $this;
@@ -111,6 +127,16 @@ class UrlTestService
         }
         $this->tests[$id] = $urlTest;
         ksort($this->tests);
+
+        $this
+            ->addResponseBodyTransformer(
+                $urlTest->getConfiguration()->getResponse()->getBodyTransformerName(),
+                $urlTest
+            )
+            ->addResponseBodyTransformer(
+                $urlTest->getConfiguration()->getResponse()->getRealResponseBodyTransformerName(),
+                $urlTest
+            );
 
         return $this;
     }
@@ -151,6 +177,25 @@ class UrlTestService
         }
 
         return $return;
+    }
+
+    public function addAbstractTest(string $id, array $configuration): self
+    {
+        if (isset($this->abstractTests[$id])) {
+            throw new \Exception('Abstract UrlTest id "' . $id . '" already exists.');
+        }
+        $this->abstractTests[$id] = $configuration;
+
+        return $this;
+    }
+
+    public function getAbstractTest(string $id): array
+    {
+        if (array_key_exists($id, $this->abstractTests) === false) {
+            throw new \Exception('Abstract UrlTest id "' . $id . '" not found.');
+        }
+
+        return $this->abstractTests[$id];
     }
 
     public function addSkippedTest(string $id): self
@@ -514,10 +559,15 @@ class UrlTestService
         array $data,
         string $fileName,
         string $urlTestId,
-        Configuration $defaultConfiguration = null
+        array $defaultConfiguration = []
     ): Configuration {
         try {
-            $return = Configuration::create($urlTestId, $data, $defaultConfiguration);
+            $return = Configuration::create(
+                $urlTestId,
+                $data,
+                array_key_exists('parent', $data) ? $this->getAbstractTest($data['parent']) : [],
+                $defaultConfiguration
+            );
         } catch (\Exception $exception) {
             throw new \Exception(
                 '[' . $fileName . '#' . $urlTestId . '] ' . $exception->getMessage(),

@@ -1,3 +1,9 @@
+### [0.0.8](../../compare/0.0.7...0.0.8) - 2017-09-11
+
+- [Feature #2](https://github.com/steevanb/php-url-test/projects/2) Create global configuration file _urltest.yml_
+- [Feature #10](https://github.com/steevanb/php-url-test/projects/10) Create abstract tests
+- [Bugfix #1](https://github.com/steevanb/php-url-test/issues/1) Fix _defaults required value should not be
+
 ### [0.0.7](../../compare/0.0.6...0.0.7) - 2017-09-07
 
 - [Bugfix #3](https://github.com/steevanb/php-url-test/issues/3) Rename _default to _defaults in _.urltest.yml_ files
