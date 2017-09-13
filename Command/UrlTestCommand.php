@@ -82,6 +82,12 @@ class UrlTestCommand extends Command
             )
             ->setStopOnError($input->getOption('stop-on-error'))
             ->setContinue($input->getOption('continue'), $input->getOption('skip'));
+        if ($input->getOption('parallel') > 1) {
+            $service
+                ->setParallelNumber((int) $input->getOption('parallel'))
+                ->setParallelResponseComparator($input->getOption('comparator'))
+                ->setParallelResponseErrorComparator($input->getOption('errorcomparator'));
+        }
 
         $this->initProgressBar($output, $service, $ids, $input->getOption('progress') === 'true');
         $return = $service->executeTests($ids) === true ? 0 : 1;
@@ -93,9 +99,11 @@ class UrlTestCommand extends Command
                 $input->getOption('errorcomparator'),
                 $output
             );
+        } else {
+            $this->showParallelResponses($service->getTests($ids), $output);
         }
 
-        if ($service->isAllTestsExecuted($ids) === false) {
+        if ($input->getOption('stop-on-error') && $service->hasContinueData()) {
             $output->writeln('');
             $output->writeln(
                 "\e[43m\e[1;30m Tests stopped, use --continue to resume since last fail, "
@@ -149,6 +157,16 @@ class UrlTestCommand extends Command
 
         foreach ($urlTests as $urlTest) {
             $comparatorService->compare($urlTest, $verbosity);
+        }
+
+        return $this;
+    }
+
+    /** @param UrlTest[] $urlTests */
+    protected function showParallelResponses(array $urlTests, OutputInterface $output): self
+    {
+        foreach ($urlTests as $urlTest) {
+            $output->write($urlTest->getParallelResponse());
         }
 
         return $this;

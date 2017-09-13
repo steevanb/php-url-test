@@ -19,7 +19,7 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
         } else {
             echo "\e[44m\e[1;37m ";
         }
-        echo '#' . $urlTest->getId() . ' '
+        echo "\e[1;37m" . $urlTest->getId() . "\e[00m "
             . $urlTest->getConfiguration()->getRequest()->getMethod() . ' '
             . $urlTest->getConfiguration()->getRequest()->getUrl() . ' '
             . $urlTest->getResponse()->getTime() . 'ms';

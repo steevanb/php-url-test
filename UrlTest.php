@@ -27,6 +27,9 @@ class UrlTest
     /** @var ResponseBodyTransformerInterface[] */
     protected $responseBodyTransformers = [];
 
+    /** @var ?string */
+    protected $parallelResponse;
+
     public function __construct(string $id, Configuration $configuration)
     {
         $this->id = $id;
@@ -74,6 +77,18 @@ class UrlTest
     public function getResponse(): ?Response
     {
         return $this->response;
+    }
+
+    public function setParallelResponse(?string $response): self
+    {
+        $this->parallelResponse = $response;
+
+        return $this;
+    }
+
+    public function getParallelResponse(): ?string
+    {
+        return $this->parallelResponse;
     }
 
     public function execute(): self

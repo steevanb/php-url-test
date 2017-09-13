@@ -30,6 +30,15 @@ class UrlTestService
     /** @var int */
     protected $parallelNumber = 1;
 
+    /** @var int */
+    protected $parallelVerbosity = 0;
+
+    /** @var ?string */
+    protected $parallelResponseComparator;
+
+    /** @var ?string */
+    protected $parallelResponseErrorComparator;
+
     /** @var bool */
     protected $stopOnError = false;
 
@@ -309,6 +318,21 @@ class UrlTestService
         return $this->parallelNumber;
     }
 
+    public function setParallelVerbosity(int $level): self
+    {
+        if ($level < 0 || $level > 3) {
+            throw new \Exception('Parallel verbosityy must be between 0 and 3.');
+        }
+        $this->parallelVerbosity = $level;
+
+        return $this;
+    }
+
+    public function getParallelVerbosity(): int
+    {
+        return $this->parallelVerbosity;
+    }
+
     public function setOnProgressCallback(?callable $onProgressCallback): self
     {
         $this->onProgressCallback = $onProgressCallback;
@@ -380,6 +404,30 @@ class UrlTestService
         return $this;
     }
 
+    public function setParallelResponseComparator(?string $parallelResponseComparator): self
+    {
+        $this->parallelResponseComparator = $parallelResponseComparator;
+
+        return $this;
+    }
+
+    public function getParallelResponseComparator(): ?string
+    {
+        return $this->parallelResponseComparator;
+    }
+
+    public function setParallelResponseErrorComparator(?string $parallelResponseErrorComparator): self
+    {
+        $this->parallelResponseErrorComparator = $parallelResponseErrorComparator;
+
+        return $this;
+    }
+
+    public function getParallelResponseErrorComparator(): ?string
+    {
+        return $this->parallelResponseErrorComparator;
+    }
+
     /** @param string[]|null $ids UrlTest identifiers string or preg pattern to retrieve */
     public function executeTests(array $ids = null): bool
     {
@@ -431,6 +479,11 @@ class UrlTestService
         return $this;
     }
 
+    public function hasContinueData(): bool
+    {
+        return file_exists($this->getContinueFilePath());
+    }
+
     protected function executeSequentialTests(array $ids = null): bool
     {
         $return = true;
@@ -472,20 +525,31 @@ class UrlTestService
             $processes = [];
             $count = min($this->getParallelNumber(), count($tests));
             for ($i = 0; $i < $count; $i++) {
-                $processes[] = [
-                    'urlTest' => array_shift($tests)
-                ];
+                $processes[] = ['urlTest' => array_shift($tests)];
             }
 
             foreach ($processes as &$process) {
                 $testIndex++;
                 $pipes = 'pipes' . $testIndex;
+                $command = 'php ' . __DIR__ . '/bin/urltest --progress=false ';
+                if ($this->getParallelResponseComparator() !== null) {
+                    $command .= '--comparator=' . $this->getParallelResponseComparator() . ' ';
+                }
+                if ($this->getParallelResponseErrorComparator() !== null) {
+                    $command .= '--errorcomparator=' . $this->getParallelResponseErrorComparator() . ' ';
+                }
+                if ($this->getParallelVerbosity() > 0) {
+                    $command .= '-' . str_repeat('v', $this->getParallelVerbosity()) . ' ';
+                }
+                $command .= '/tmp/testurl.yml test1';
+                $process['errorsFileName'] = tempnam(sys_get_temp_dir(), 'url');
+                file_put_contents($process['errorsFileName'], null);
                 $process['process'] = proc_open(
-                    'php ' . __DIR__ . '/bin/urltest --comparator=console --progress=false ../test.urltest.yml',
+                    $command,
                     [
-                        0 => ["pipe", "r"],
-                        1 => ["pipe", "w"],
-                        2 => ["file", "/tmp/error-output.txt", "a"]
+                        0 => ['pipe', 'r'],
+                        1 => ['pipe', 'w'],
+                        2 => ['file', $process['errorsFileName'], 'a']
                     ],
                     $$pipes
                 );
@@ -494,9 +558,35 @@ class UrlTestService
             }
 
             foreach ($processes as &$process) {
-                echo stream_get_contents($process['pipes'][1]);
+                $process['urlTest']->setParallelResponse(stream_get_contents($process['pipes'][1]));
+                if (is_readable($process['errorsFileName'])) {
+                    $errors = file_get_contents($process['errorsFileName']);
+                    unlink($process['errorsFileName']);
+                    if ($errors !== '') {
+                        $process['urlTest']->setParallelResponse(
+                            $process['urlTest']->getParallelResponse()
+                            . "\n\n"
+                            . $errors
+                        );
+                    }
+                }
                 fclose($process['pipes'][1]);
-                proc_close($process['process']);
+                $process['urlTest']->setValid(proc_close($process['process']) === 0);
+
+                if (is_callable($this->getOnProgressCallback())) {
+                    call_user_func($this->getOnProgressCallback(), $process['urlTest']);
+                }
+
+                if ($process['urlTest']->isValid() === false) {
+                    $return = false;
+                    if ($this->isStopOnError()) {
+                        $this->saveContinueData($process['urlTest']);
+                    }
+                }
+            }
+
+            if ($return === false) {
+                break;
             }
         }
 
