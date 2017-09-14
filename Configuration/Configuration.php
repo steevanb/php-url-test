@@ -20,6 +20,8 @@ class Configuration
         $return->setId($id);
         static::resolve($configuration, $parentConfiguration, $defaultConfiguration);
 
+        $return->setPosition($configuration['position']);
+
         $return
             ->getRequest()
             ->setUrl($configuration['request']['url'])
@@ -66,6 +68,8 @@ class Configuration
         $resolver
             ->setDefault('parent', null)
             ->setAllowedTypes('parent', ['null', 'string'])
+            ->setDefault('position', null)
+            ->setAllowedTypes('position', ['null', 'int'])
             ->setDefault('request', [])
             ->setAllowedTypes('request', 'array')
             ->setDefault('expectedResponse', [])
@@ -295,6 +299,9 @@ class Configuration
     /** @var string */
     protected $id;
 
+    /** @var ?int */
+    protected $position;
+
     /** @var Request */
     protected $request;
 
@@ -317,6 +324,18 @@ class Configuration
     public function getId(): ?string
     {
         return $this->id;
+    }
+
+    public function setPosition(?int $position): self
+    {
+        $this->position = $position;
+
+        return $this;
+    }
+
+    public function getPosition(): ?int
+    {
+        return $this->position;
     }
 
     public function getRequest(): Request

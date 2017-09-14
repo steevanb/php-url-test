@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 use steevanb\PhpUrlTest\{
     Command\DumpConfigurationCommand,
+    Command\ExportConfigurationCommand,
     Command\UrlTestCommand
 };
 use Symfony\Component\Console\Application;
@@ -51,6 +52,10 @@ function createCommand()
         if ($arg === '--dump-configuration') {
             unset($_SERVER['argv'][$index]);
             $return = new DumpConfigurationCommand();
+            break;
+        } elseif ($arg === '--export-configuration') {
+            unset($_SERVER['argv'][$index]);
+            $return = new ExportConfigurationCommand();
             break;
         }
     }

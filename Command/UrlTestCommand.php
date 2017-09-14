@@ -86,7 +86,8 @@ class UrlTestCommand extends Command
             $service
                 ->setParallelNumber((int) $input->getOption('parallel'))
                 ->setParallelResponseComparator($input->getOption('comparator'))
-                ->setParallelResponseErrorComparator($input->getOption('errorcomparator'));
+                ->setParallelResponseErrorComparator($input->getOption('errorcomparator'))
+                ->setParallelVerbosity($this->getVerbosity($output));
         }
 
         $this->initProgressBar($output, $service, $ids, $input->getOption('progress') === 'true');

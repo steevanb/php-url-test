@@ -13,13 +13,8 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
         int $verbosity = ResponseComparatorInterface::VERBOSITY_NORMAL
     ): ResponseComparatorInterface {
         echo "\n";
-        if ($verbosity === ResponseComparatorInterface::VERBOSITY_NORMAL) {
-            $this->writeResult($urlTest);
-            echo ' ';
-        } else {
-            echo "\e[44m\e[1;37m ";
-        }
-        echo "\e[1;37m" . $urlTest->getId() . "\e[00m "
+        $this->writeResult($urlTest);
+        echo " \e[1;37m" . $urlTest->getId() . "\e[00m "
             . $urlTest->getConfiguration()->getRequest()->getMethod() . ' '
             . $urlTest->getConfiguration()->getRequest()->getUrl() . ' '
             . $urlTest->getResponse()->getTime() . 'ms';
@@ -81,10 +76,6 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
             ->writeBodyDiff($urlTest, $verbosity)
             ->writeRedirectionDiff($urlTest, $verbosity)
             ->writeRedirectionCountDiff($urlTest, $verbosity);
-        if ($verbosity >= ResponseComparatorInterface::VERBOSITY_VERBOSE) {
-            $this->writeResult($urlTest);
-            echo "\n";
-        }
 
         return $this;
     }

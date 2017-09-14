@@ -87,6 +87,8 @@ testId:
     abstract: false
     # id of parent default configuration
     parent: ~
+    # 0 is first. don't use negative numbers, it's used by UrlTest
+    position: 0
     request:
         url: http://test.dev
         timeout: 30

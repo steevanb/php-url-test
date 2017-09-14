@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace steevanb\PhpUrlTest;
 
+use steevanb\PhpUrlTest\Configuration\Exporter\YamlExporter;
 use steevanb\PhpYaml\Parser;
 use steevanb\PhpUrlTest\Configuration\Configuration;
 
@@ -185,7 +186,7 @@ class UrlTestService
             }
         }
 
-        return $return;
+        return $this->sortTests($return);
     }
 
     public function addAbstractTest(string $id, array $configuration): self
@@ -484,6 +485,29 @@ class UrlTestService
         return file_exists($this->getContinueFilePath());
     }
 
+    /** @param UrlTest[] $urlTests */
+    protected function sortTests(array $urlTests): array
+    {
+        $sorted = [];
+        foreach ($urlTests as $urlTest) {
+            $position = $urlTest->getConfiguration()->getPosition() ?? -1;
+            if (array_key_exists($position, $sorted) === false) {
+                $sorted[$position] = [];
+            }
+            $sorted[$position][] = $urlTest;
+        }
+        ksort($sorted);
+
+        $return = [];
+        foreach ($sorted as $urlTests) {
+            foreach ($urlTests as $urlTest) {
+                $return[] = $urlTest;
+            }
+        }
+
+        return $return;
+    }
+
     protected function executeSequentialTests(array $ids = null): bool
     {
         $return = true;
@@ -531,21 +555,11 @@ class UrlTestService
             foreach ($processes as &$process) {
                 $testIndex++;
                 $pipes = 'pipes' . $testIndex;
-                $command = 'php ' . __DIR__ . '/bin/urltest --progress=false ';
-                if ($this->getParallelResponseComparator() !== null) {
-                    $command .= '--comparator=' . $this->getParallelResponseComparator() . ' ';
-                }
-                if ($this->getParallelResponseErrorComparator() !== null) {
-                    $command .= '--errorcomparator=' . $this->getParallelResponseErrorComparator() . ' ';
-                }
-                if ($this->getParallelVerbosity() > 0) {
-                    $command .= '-' . str_repeat('v', $this->getParallelVerbosity()) . ' ';
-                }
-                $command .= '/tmp/testurl.yml test1';
-                $process['errorsFileName'] = tempnam(sys_get_temp_dir(), 'url');
+                $process['errorsFileName'] = tempnam(sys_get_temp_dir(), 'urltest_errors_');
                 file_put_contents($process['errorsFileName'], null);
+                $process['configurationFileName'] = $this->getTemporaryConfigurationFileName();
                 $process['process'] = proc_open(
-                    $command,
+                    $this->getParallelCommand($process['urlTest'], $process['configurationFileName']),
                     [
                         0 => ['pipe', 'r'],
                         1 => ['pipe', 'w'],
@@ -559,6 +573,11 @@ class UrlTestService
 
             foreach ($processes as &$process) {
                 $process['urlTest']->setParallelResponse(stream_get_contents($process['pipes'][1]));
+
+                if (file_exists($process['configurationFileName'])) {
+                    unlink($process['configurationFileName']);
+                }
+
                 if (is_readable($process['errorsFileName'])) {
                     $errors = file_get_contents($process['errorsFileName']);
                     unlink($process['errorsFileName']);
@@ -570,6 +589,7 @@ class UrlTestService
                         );
                     }
                 }
+
                 fclose($process['pipes'][1]);
                 $process['urlTest']->setValid(proc_close($process['process']) === 0);
 
@@ -585,12 +605,41 @@ class UrlTestService
                 }
             }
 
-            if ($return === false) {
+            if ($return === false && $this->isStopOnError()) {
                 break;
             }
         }
 
         return $return;
+    }
+
+    protected function getParallelCommand(UrlTest $urlTest, string $configurationFileName): string
+    {
+        $return = 'php ' . $this->getUrlTestBinPath() . ' --progress=false ';
+        if ($this->getParallelResponseComparator() !== null) {
+            $return .= '--comparator=' . $this->getParallelResponseComparator() . ' ';
+        }
+        if ($this->getParallelResponseErrorComparator() !== null) {
+            $return .= '--errorcomparator=' . $this->getParallelResponseErrorComparator() . ' ';
+        }
+        if ($this->getParallelVerbosity() > 0) {
+            $return .= '-' . str_repeat('v', $this->getParallelVerbosity()) . ' ';
+        }
+
+        (new YamlExporter())->exportToFile($urlTest, $configurationFileName);
+        $return .= $configurationFileName . ' ' . $urlTest->getId();
+
+        return $return;
+    }
+
+    protected function getTemporaryConfigurationFileName(): string
+    {
+        return tempnam(sys_get_temp_dir(), 'urltest_test_');
+    }
+
+    protected function getUrlTestBinPath(): string
+    {
+        return __DIR__ . '/bin/urltest';
     }
 
     protected function saveContinueData(UrlTest $current): self
