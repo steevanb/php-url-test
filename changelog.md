@@ -1,3 +1,15 @@
+### [0.0.10](../../compare/0.0.9...0.0.10) - 2017-10-04
+
+- Fix response header parsing
+
+### [0.0.9](../../compare/0.0.8...0.0.9) - 2017-10-03
+
+- Add _YamlExporter_, to export UrlTest into yaml
+- Add _urltest:configuration:export_ command, to export a test into yaml
+- Add _position_ configuration to test, to choose it's position in test chain
+- Add _--export-configuration_ parameter to _bin/urltest_, to export configuration into yaml 
+- Working on parallel tests, do not use it for now
+
 ### [0.0.8](../../compare/0.0.7...0.0.8) - 2017-09-11
 
 - [Feature #2](https://github.com/steevanb/php-url-test/projects/2) Create global configuration file _urltest.yml_
