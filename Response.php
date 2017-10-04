@@ -202,14 +202,16 @@ class Response
     protected function defineHeaders(string $header): self
     {
         $this->header = $header;
+        $this->headers = [];
         foreach (explode("\r\n", substr($header, stripos($header, "\r\n"))) as $line) {
             if (empty($line)) {
                 continue;
             }
-            [$name, $value] = explode(": ", $line);
-            if ($name === null) {
+            if (strpos($line, ':') === false) {
+                $this->headers[$line] = null;
                 continue;
             }
+            [$name, $value] = explode(": ", $line);
             $this->headers[$name] = $value;
         }
 

@@ -185,7 +185,7 @@ class UrlTest
             $this->compare($expectedResponse->getHeaderSize(), $this->getResponse()->getHeaderSize());
 
             foreach ($this->getResponse()->getHeaders() ?? [] as $headerName => $headerValue) {
-                foreach ($expectedResponse->getHeaders() as $allowedHeaderName => $allowedHeaderValue) {
+                foreach ($expectedResponse->getHeaders() ?? [] as $allowedHeaderName => $allowedHeaderValue) {
                     if ($allowedHeaderName === $headerName && (string) $allowedHeaderValue !== $headerValue) {
                         $this->valid = false;
                         break;
@@ -198,7 +198,7 @@ class UrlTest
             }
             $responseHeaderNames = array_keys($this->getResponse()->getHeaders());
             $responseHeaderValues = $this->getResponse()->getHeaders();
-            foreach ($expectedResponse->getHeaders() as $headerName => $headerValue) {
+            foreach ($expectedResponse->getHeaders() ?? [] as $headerName => $headerValue) {
                 if (
                     in_array($headerName, $responseHeaderNames) === false
                     || (string) $headerValue !== $responseHeaderValues[$headerName]
