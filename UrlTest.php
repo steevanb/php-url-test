@@ -252,6 +252,8 @@ class UrlTest
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_CUSTOMREQUEST => $request->getMethod(),
             CURLOPT_HEADER => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
             CURLOPT_HTTPHEADER => $headers,
             CURLOPT_REFERER => $request->getReferer(),
             CURLOPT_POSTFIELDS => $request->getPostData(),
