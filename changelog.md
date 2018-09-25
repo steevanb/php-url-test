@@ -1,3 +1,13 @@
+### [0.0.12](../../compare/0.0.11...0.0.12) - 2018-09-25
+
+- Move _CreateUrlTestServiceTrait_ from _steevanb\PhpUrlTest\Command_ to _steevanb\PhpUrlTest_
+- Remove _CreateUrlTestServiceTrait::createFilteredIdsUrlTestService()_
+- Add `--configuration` to _urltest:configuration:dump_ and _urltest:test_ to indicate your configuration file 
+- Add `$configurationFileName` parameter to _CreateUrlTestServiceTrait::createUrlTestService()_
+- UrlTest ids now have same syntax between _urltest:configuration:dump_ and _urltest:test_
+- New UrlTest will now have `response.code: 200` default value
+- Add parameters to configuration file
+
 ### [0.0.10](../../compare/0.0.9...0.0.10) - 2017-10-04
 
 - Fix response header parsing

@@ -13,6 +13,7 @@ use Symfony\Component\Console\{
     Output\OutputInterface
 };
 use steevanb\PhpUrlTest\{
+    CreateUrlTestServiceTrait,
     ResponseComparator\ResponseComparatorInterface,
     ResponseComparator\ResponseComparatorService,
     UrlTest,
@@ -62,6 +63,12 @@ class UrlTestCommand extends Command
                 'Comparator name to compare response with expected one when test fail',
                 'console'
             )
+            ->addOption(
+                'configuration',
+                'conf',
+                InputOption::VALUE_OPTIONAL,
+                'Configuration file name'
+            )
             ->addOption('progress', null, InputOption::VALUE_OPTIONAL, 'Show/hide progress bar.', 'true')
             ->addOption('recursive', 'r', InputOption::VALUE_OPTIONAL, 'Set recursive if path is a directory.', 'true')
             ->addOption('stop-on-error', null, InputOption::VALUE_NONE, 'Stop when a test fail.')
@@ -75,10 +82,10 @@ class UrlTestCommand extends Command
     {
         $ids = $input->getArgument('ids') === null ? null : explode(',', $input->getArgument('ids'));
         $service = $this
-            ->createFilteredIdsUrlTestService(
+            ->createUrlTestService(
                 $input->getArgument('path'),
                 $input->getOption('recursive') === 'true',
-                $ids
+                $input->getOption('configuration')
             )
             ->setStopOnError($input->getOption('stop-on-error'))
             ->setContinue($input->getOption('continue'), $input->getOption('skip'));

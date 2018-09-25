@@ -24,51 +24,18 @@ class ConsoleConfigurationDumper
         $this->output = $output;
     }
 
-    public function dumpGlobal(UrlTestService $urlTestService, ?array $ids): self
+    public function dumpConfiguration(UrlTestService $urlTestService, array $ids = null): self
     {
-        $this->writeHeader('Global');
-        $table = new Table($this->output);
-        $table->setHeaders(['Global', 'Value']);
-        $this->writeConfiguration($table, 'Tests', $urlTestService->countTests());
-        if (count($ids ?? []) > 0) {
-            $this->writeConfiguration($table, 'Filtered tests', $urlTestService->countTests($ids));
-        }
         $this
-            ->writeArrayConfiguration($table, 'Directory', 'Directories', $urlTestService->getDirectories())
-            ->writeArrayConfiguration($table, 'File', 'Files', $urlTestService->getFiles());
-        $table->render();
-
-        if ($this->output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
-            $this->output->writeln('');
-            $countTests = $urlTestService->countTests();
-            $this->writeHeader($countTests <= 1 ? $countTests . ' test' : $countTests . ' tests');
-            $table = new Table($this->output);
-            $table->setHeaders(['', 'Id', 'Method', 'Url']);
-            foreach ($urlTestService->getTests() as $index => $urlTest) {
-                $table->addRow([
-                    '#' . ($index + 1),
-                    $urlTest->getId(),
-                    $urlTest->getConfiguration()->getRequest()->getMethod(),
-                    $urlTest->getConfiguration()->getRequest()->getUrl()
-                ]);
-            }
-            $table->render();
-        }
-
-        if (count($ids ?? []) > 0) {
-            $this->output->writeln('');
-            $table = new Table($this->output);
-            $table->setHeaders(['Test id filter', 'Tests found']);
-            foreach ($ids as $id) {
-                $table->addRow([$id, $urlTestService->countTests([$id])]);
-            }
-            $table->render();
-        }
+            ->dumpConfigurationFiles($urlTestService)
+            ->dumpParameters($urlTestService)
+            ->dumpTestsCount($urlTestService, $ids)
+            ->dumpUrlTestFiles($urlTestService);
 
         return $this;
     }
 
-    public function dump(UrlTest $urlTest): void
+    public function dumpUrlTest(UrlTest $urlTest): self
     {
         $request = $urlTest->getConfiguration()->getRequest();
         $response = $urlTest->getConfiguration()->getResponse();
@@ -126,10 +93,15 @@ class ConsoleConfigurationDumper
             $this->output->writeln('Response body:');
             $this->output->writeln($expectedBody);
         }
+
+        return $this;
     }
 
-    protected function writeHeader(string $name): self
+    protected function writeHeader(string $name, bool $lineBreak = false): self
     {
+        if ($lineBreak) {
+            $this->output->writeln('');
+        }
         $this->output->writeln("<comment>$name</comment>");
 
         return $this;
@@ -195,6 +167,91 @@ class ConsoleConfigurationDumper
         }
         if ($configuration->getResponse()->getRedirectCount() !== null) {
             $table->addRow(['Redirection count', $configuration->getResponse()->getRedirectCount()]);
+        }
+
+        return $this;
+    }
+
+    protected function dumpConfigurationFiles(UrlTestService $urlTestService): self
+    {
+        $this->writeHeader('Configuration files');
+        $configurationFileNames = $urlTestService->getConfigurationFileNames();
+        if (count($configurationFileNames) === 0) {
+            $this->output->writeln(
+                'No configuration file specified.'
+                . ' Create urltest.yml in your directory, or specify path with --configuration parameter.'
+            );
+        } else {
+            foreach ($configurationFileNames as $configurationFileName) {
+                $this->output->writeln($configurationFileName);
+            }
+        }
+
+        return $this;
+    }
+
+    protected function dumpParameters(UrlTestService $urlTestService): self
+    {
+        $parameters = $urlTestService->getParameters();
+        if (count($parameters) > 0) {
+            $this->writeHeader('Parameters', true);
+            foreach ($parameters as $name => $value) {
+                $this->output->writeln('%' . $name . '%: ' . $value);
+            }
+        }
+
+        return $this;
+    }
+
+    protected function dumpTestsCount(UrlTestService $urlTestService, array $ids = null): self
+    {
+        $this->writeHeader('UrlTests', true);
+
+        $this->output->writeln(
+            '<info>' . $urlTestService->countTests() . '</info>'
+            . ' test' . ($urlTestService->countTests() > 1 ? 's' : null) . ' found.'
+        );
+
+        if (count($ids ?? []) > 0) {
+            $this->output->writeln(
+                '<info>' . $urlTestService->countTests($ids) . '</info>'
+                . ' test' . ($urlTestService->countTests($ids) > 1 ? 's' : null)
+                . ' filtered by <comment>' . implode(',', $ids) . '</comment>.'
+            );
+        }
+
+        return $this;
+    }
+
+    protected function dumpUrlTestFiles(UrlTestService $urlTestService): self
+    {
+        $this->writeHeader('Directories', true);
+        foreach ($urlTestService->getDirectories() as $directory) {
+            $this->output->writeln(realpath($directory));
+        }
+
+        if ($this->output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
+            $this->writeHeader('Files', true);
+            foreach ($urlTestService->getFiles() as $file) {
+                $this->output->writeln($file);
+            }
+        }
+
+        if ($this->output->getVerbosity() >= OutputInterface::VERBOSITY_VERY_VERBOSE) {
+            $this->output->writeln('');
+            $countTests = $urlTestService->countTests();
+            $this->writeHeader($countTests <= 1 ? $countTests . ' test' : $countTests . ' tests');
+            $table = new Table($this->output);
+            $table->setHeaders(['', 'Id', 'Method', 'Url']);
+            foreach ($urlTestService->getTests() as $index => $urlTest) {
+                $table->addRow([
+                    '#' . ($index + 1),
+                    $urlTest->getId(),
+                    $urlTest->getConfiguration()->getRequest()->getMethod(),
+                    $urlTest->getConfiguration()->getRequest()->getUrl()
+                ]);
+            }
+            $table->render();
         }
 
         return $this;

@@ -13,9 +13,9 @@ class Configuration
         string $id,
         array $configuration,
         array $parentConfiguration = [],
-        array $defaultConfiguration = []
-    ): self
-    {
+        array $defaultConfiguration = [],
+        array $parameters = []
+    ): self {
         $return = new static();
         $return->setId($id);
         static::resolve($configuration, $parentConfiguration, $defaultConfiguration);
@@ -24,40 +24,82 @@ class Configuration
 
         $return
             ->getRequest()
-            ->setUrl($configuration['request']['url'])
-            ->setTimeout($configuration['request']['timeout'])
-            ->setPort($configuration['request']['port'])
-            ->setMethod($configuration['request']['method'])
-            ->setUserAgent($configuration['request']['userAgent'])
+            ->setUrl(static::replaceParameters($configuration['request']['url'], $parameters))
+            ->setTimeout(static::replaceIntParameters($configuration['request']['timeout'], $parameters))
+            ->setPort(static::replaceIntParameters($configuration['request']['port'], $parameters))
+            ->setMethod(static::replaceParameters($configuration['request']['method'], $parameters))
+            ->setUserAgent(static::replaceParameters($configuration['request']['userAgent'], $parameters))
             ->setPostData($configuration['request']['postData'])
-            ->setReferer($configuration['request']['referer'])
-            ->setAllowRedirect($configuration['request']['allowRedirect'])
+            ->setReferer(static::replaceParameters($configuration['request']['referer'], $parameters))
+            ->setAllowRedirect(
+                (bool) static::replaceParameters($configuration['request']['allowRedirect'], $parameters)
+            )
             ->setHeaders($configuration['request']['headers']);
 
         $return
             ->getResponse()
-            ->setUrl($configuration['expectedResponse']['url'])
-            ->setCode($configuration['expectedResponse']['code'])
-            ->setSize($configuration['expectedResponse']['size'])
-            ->setContentType($configuration['expectedResponse']['contentType'])
-            ->setNumConnects($configuration['expectedResponse']['numConnects'])
-            ->setRedirectMin($configuration['expectedResponse']['redirect']['min'])
-            ->setRedirectMax($configuration['expectedResponse']['redirect']['max'])
-            ->setRedirectCount($configuration['expectedResponse']['redirect']['count'])
+            ->setUrl(static::replaceParameters($configuration['expectedResponse']['url'], $parameters))
+            ->setCode(static::replaceIntParameters($configuration['expectedResponse']['code'], $parameters))
+            ->setSize(static::replaceIntParameters($configuration['expectedResponse']['size'], $parameters))
+            ->setContentType(
+                static::replaceParameters($configuration['expectedResponse']['contentType'], $parameters)
+            )
+            ->setNumConnects(
+                static::replaceIntParameters($configuration['expectedResponse']['numConnects'], $parameters)
+            )
+            ->setRedirectMin(
+                static::replaceIntParameters($configuration['expectedResponse']['redirect']['min'], $parameters)
+            )
+            ->setRedirectMax(
+                static::replaceIntParameters($configuration['expectedResponse']['redirect']['max'], $parameters)
+            )
+            ->setRedirectCount(
+                static::replaceIntParameters($configuration['expectedResponse']['redirect']['count'], $parameters)
+            )
             ->setHeaders($configuration['expectedResponse']['header']['headers'])
             ->setUnallowedHeaders($configuration['expectedResponse']['header']['unallowedHeaders'])
-            ->setHeaderSize($configuration['expectedResponse']['header']['size'])
+            ->setHeaderSize(
+                static::replaceIntParameters($configuration['expectedResponse']['header']['size'], $parameters)
+            )
             ->setBody($configuration['expectedResponse']['body']['content'])
-            ->setBodySize($configuration['expectedResponse']['body']['size'])
-            ->setBodyTransformerName($configuration['expectedResponse']['body']['transformer'])
-            ->setBodyFileName($configuration['expectedResponse']['body']['fileName']);
+            ->setBodySize(
+                static::replaceIntParameters($configuration['expectedResponse']['body']['size'], $parameters)
+            )
+            ->setBodyTransformerName(
+                static::replaceParameters($configuration['expectedResponse']['body']['transformer'], $parameters)
+            )
+            ->setBodyFileName(
+                static::replaceParameters($configuration['expectedResponse']['body']['fileName'], $parameters)
+            );
 
         $return
             ->getResponse()
-            ->setRealResponseBodyTransformerName($configuration['response']['body']['transformer'])
-            ->setRealResponseBodyFileName($configuration['response']['body']['fileName']);
+            ->setRealResponseBodyTransformerName(
+                static::replaceParameters($configuration['response']['body']['transformer'], $parameters)
+            )
+            ->setRealResponseBodyFileName(
+                static::replaceParameters($configuration['response']['body']['fileName'], $parameters)
+            );
 
         return $return;
+    }
+
+    /** @return mixed */
+    protected static function replaceParameters($data, array $parameters)
+    {
+        $return = $data;
+        if ($data !== null) {
+            foreach ($parameters as $name => $value) {
+                $return = str_replace('%' . $name . '%', $value, $data);
+            }
+        }
+
+        return $return;
+    }
+
+    protected static function replaceIntParameters($data, array $parameters): ?int
+    {
+        return ($data !== null) ? (int) static::replaceParameters($data, $parameters) : null;
     }
 
     protected static function resolve(array &$data, array $parent, array $default = []): void
@@ -69,7 +111,7 @@ class Configuration
             ->setDefault('parent', null)
             ->setAllowedTypes('parent', ['null', 'string'])
             ->setDefault('position', null)
-            ->setAllowedTypes('position', ['null', 'int'])
+            ->setAllowedTypes('position', ['null', 'int', 'string'])
             ->setDefault('request', [])
             ->setAllowedTypes('request', 'array')
             ->setDefault('expectedResponse', [])
@@ -93,14 +135,14 @@ class Configuration
                     ?? $default['request']['timeout']
                     ?? $defaultConfiguration->getRequest()->getTimeout()
             )
-            ->setAllowedTypes('timeout', 'int')
+            ->setAllowedTypes('timeout', 'int', 'string')
             ->setDefault(
                 'port',
                 $parent['request']['port']
                     ?? $default['request']['port']
                     ?? $defaultConfiguration->getRequest()->getPort()
             )
-            ->setAllowedTypes('port', 'int')
+            ->setAllowedTypes('port', 'int', 'string')
             ->setDefault(
                 'method',
                 $parent['request']['method']
@@ -155,21 +197,21 @@ class Configuration
                     ?? $default['expectedResponse']['code']
                     ?? $defaultConfiguration->getResponse()->getCode()
             )
-            ->setAllowedTypes('code', ['null', 'int'])
+            ->setAllowedTypes('code', ['null', 'int', 'string'])
             ->setDefault(
                 'numConnects',
                 $parent['expectedResponse']['numConnects']
                     ?? $default['expectedResponse']['numConnects']
                     ?? $defaultConfiguration->getResponse()->getNumConnects()
             )
-            ->setAllowedTypes('numConnects', ['null', 'int'])
+            ->setAllowedTypes('numConnects', ['null', 'int', 'string'])
             ->setDefault(
                 'size',
                 $parent['expectedResponse']['size']
                     ?? $default['expectedResponse']['size']
                     ?? $defaultConfiguration->getResponse()->getSize()
             )
-            ->setAllowedTypes('size', ['null', 'int'])
+            ->setAllowedTypes('size', ['null', 'int', 'string'])
             ->setDefault(
                 'contentType',
                 $parent['expectedResponse']['contentType']
@@ -198,21 +240,21 @@ class Configuration
                     ?? $default['expectedResponse']['redirect']['min']
                     ?? $defaultConfiguration->getResponse()->getRedirectMin()
             )
-            ->setAllowedTypes('min', ['null', 'int'])
+            ->setAllowedTypes('min', ['null', 'int', 'string'])
             ->setDefault(
                 'max',
                 $parent['expectedResponse']['redirect']['max']
                     ?? $default['expectedResponse']['redirect']['max']
                     ?? $defaultConfiguration->getResponse()->getRedirectMax()
             )
-            ->setAllowedTypes('max', ['null', 'int'])
+            ->setAllowedTypes('max', ['null', 'int', 'string'])
             ->setDefault(
                 'count',
                 $parent['expectedResponse']['redirect']['count']
                     ?? $default['expectedResponse']['redirect']['count']
                     ?? $defaultConfiguration->getResponse()->getRedirectCount()
             )
-            ->setAllowedTypes('count', ['null', 'int']);
+            ->setAllowedTypes('count', ['null', 'int', 'string']);
         $data['expectedResponse']['redirect'] = $expectedResponseRedirectResolver->resolve(
             $data['expectedResponse']['redirect']
         );
@@ -234,7 +276,7 @@ class Configuration
                     ?? $default['expectedResponse']['header']['size']
                     ?? $defaultConfiguration->getResponse()->getHeaderSize()
             )
-            ->setAllowedTypes('size', ['null', 'int']);
+            ->setAllowedTypes('size', ['null', 'int', 'string']);
         $data['expectedResponse']['header'] = $expectedResponseHeaderResolver->resolve(
             $data['expectedResponse']['header']
         );
@@ -254,7 +296,7 @@ class Configuration
                     ?? $default['expectedResponse']['body']['size']
                     ?? $defaultConfiguration->getResponse()->getBodySize()
             )
-            ->setAllowedTypes('size', ['null', 'int'])
+            ->setAllowedTypes('size', ['null', 'int', 'string'])
             ->setDefault(
                 'transformer',
                 $parent['expectedResponse']['body']['transformer']

@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace steevanb\PhpUrlTest;
 
-use steevanb\PhpUrlTest\Configuration\Exporter\YamlExporter;
+use steevanb\PhpUrlTest\{
+    Configuration\Exporter\YamlExporter,
+    Configuration\Configuration
+};
 use steevanb\PhpYaml\Parser;
-use steevanb\PhpUrlTest\Configuration\Configuration;
 
 class UrlTestService
 {
+    /** @var string[] */
+    protected $configurationFileNames = [];
+
     /** @var string[] */
     protected $directories = [];
 
@@ -46,13 +51,25 @@ class UrlTestService
     /** @var ?array */
     protected $continueData;
 
-    public function setConfigurationFile(string $fileName): self
+    /** @var array */
+    protected $parameters = [];
+
+    public function addConfigurationFile(string $fileName): self
     {
+        if (file_exists($fileName) === false) {
+            throw new \Exception('Configuration file "' . $fileName . '" does not exist.');
+        }
+        $this->configurationFileNames[] = $fileName;
+
         Parser::registerFileFunction(dirname($fileName));
         try {
             $configurations = (new Parser())->parse(file_get_contents($fileName));
         } catch (\Exception $exception) {
             throw new \Exception('[' . $fileName . '] ' . $exception->getMessage(), 0, $exception);
+        }
+
+        foreach ($configurations['imports'] ?? [] as $import) {
+            $this->addConfigurationFile(dirname($fileName) . DIRECTORY_SEPARATOR . $import['resource']);
         }
 
         foreach ($configurations['urltest'] ?? [] as $id => $configuration) {
@@ -63,7 +80,28 @@ class UrlTestService
             }
         }
 
+        foreach ($configurations['parameters'] ?? [] as $name => $value) {
+            $this->addParameter($name, $value);
+        }
+
         return $this;
+    }
+
+    public function getConfigurationFileNames(): array
+    {
+        return $this->configurationFileNames;
+    }
+
+    public function addParameter(string $name, $value): self
+    {
+        $this->parameters[$name] = $value;
+
+        return $this;
+    }
+
+    public function getParameters(): array
+    {
+        return $this->parameters;
     }
 
     public function getDirectories(): array
@@ -90,7 +128,7 @@ class UrlTestService
 
     public function addTestDirectory(string $directory, bool $recursive = true): self
     {
-        $this->addTestDirectoryAndRegisterDirectory($directory, $recursive);
+        $this->addTestDirectoryAndRegisterDirectory(realpath($directory), $recursive);
 
         return $this;
     }
@@ -100,6 +138,7 @@ class UrlTestService
         if (file_exists($fileName) === false) {
             throw new \Exception('UrlTest file "' . $fileName . '" does not exists.');
         }
+        $fileName = realpath($fileName);
         $this->files[$fileName] = null;
 
         Parser::registerFileFunction(dirname($fileName));
@@ -108,23 +147,25 @@ class UrlTestService
         } catch (\Exception $exception) {
             throw new \Exception('[' . $fileName . '] ' . $exception->getMessage(), 0, $exception);
         }
-        if (is_array($configurations) === false) {
-            throw new \Exception('Url test configuration file "' . $fileName . '" is malformed.');
-        }
-        if (array_key_exists('_defaults', $configurations)) {
-            $defaultConfiguration = $configurations['_defaults'];
-            unset($configurations['_defaults']);
-        } else {
-            $defaultConfiguration = [];
-        }
 
-        foreach ($configurations as $id => $data) {
-            $this->assertTestId($id);
-            $id = (string) $id;
-            $this->addTest(
-                $id,
-                new UrlTest($id, $this->createConfiguration($data, $fileName, $id, $defaultConfiguration))
-            );
+        if ($configurations !== null) {
+            if (is_array($configurations) === false) {
+                throw new \Exception('Url test configuration file "' . $fileName . '" is malformed.');
+            }
+            $defaultConfiguration['expectedResponse']['code'] = 200;
+            if (array_key_exists('_defaults', $configurations)) {
+                $defaultConfiguration = $configurations['_defaults'];
+                unset($configurations['_defaults']);
+            }
+
+            foreach ($configurations as $id => $data) {
+                $this->assertTestId($id);
+                $id = (string)$id;
+                $this->addTest(
+                    $id,
+                    new UrlTest($id, $this->createConfiguration($data, $fileName, $id, $defaultConfiguration))
+                );
+            }
         }
 
         return $this;
@@ -705,7 +746,8 @@ class UrlTestService
                 $urlTestId,
                 $data,
                 array_key_exists('parent', $data) ? $this->getAbstractTest($data['parent']) : [],
-                $defaultConfiguration
+                $defaultConfiguration,
+                $this->getParameters()
             );
         } catch (\Exception $exception) {
             throw new \Exception(

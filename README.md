@@ -1,5 +1,5 @@
-[![version](https://img.shields.io/badge/alpha-0.0.10-red.svg)](https://github.com/steevanb/php-url-test/tree/0.0.10)
-![Lines](https://img.shields.io/badge/code%20lines-3504-green.svg)
+[![version](https://img.shields.io/badge/alpha-0.0.12-red.svg)](https://github.com/steevanb/php-url-test/tree/0.0.12)
+![Lines](https://img.shields.io/badge/code%20lines-3668-green.svg)
 ![Total Downloads](https://poser.pugx.org/steevanb/php-url-test/downloads)
 
 php-url-test
@@ -15,38 +15,41 @@ Tests all urls of your application
 
 /!\ Keep in mind this is an alpha version /!\
 
+Don't allow to update minor/bug fix versions, as we can break compatibility between bug fixes until final release.
+
 ```bash
-composer require --dev "steevanb/php-url-test": "^0.0.10"
+composer require --dev "steevanb/php-url-test": "0.0.12"
 ```
 
 ### Launch tests
 
 ```bash
-# scan src/ to find *.urltest.yml files, --recursive=true or -r=true to do it recursively
-./bin/urltest src/
+# scan tests/ to find *.urltest.yml files, --recursive=false or -r=false to not do it recursively
+# if urltest.yml file is found into tests/ (not in sub directories), it will be used for default configuration file
+./vendor/bin/urltest tests/
 
 # test url_test_foo
-./bin/urltest src/ url_test_foo
+./vendor/bin/urltest tests/ url_test_foo
 
 # test url_test_foo and all tests who match preg pattern /^url_test_bar[0..9]{1,}$/
-./bin/urltest src/ url_test_foo,/^url_test_bar[0..9]{1,}$/
+./vendor/bin/urltest tests/ url_test_foo,/^url_test_bar[0..9]{1,}$/
 
 # launch tests from foo.urltest.yml only
-./bin/urltest src/Tests/foo.urltest.yml
+./vendor/bin/urltest tests/Tests/foo.urltest.yml
+
+# don't use tests/urltest.yml, use another configuration file
+# if you are a few developers with different domain for each developer,
+# you can create a configuration file by developer and use parameters to configure it
+./vendor/bin/urltest tests/ --configuration=tests/foo.yml
 ```
-
-If _path_ (_src/_ in example) is a directory, urltest will try to find _urltest.yml_ global configuration file in this directory.
-
-You can specify a global configuration file in _path_, example : _src/myurltest.yml_
-
 ### Show success or fail informations
 
 ```bash
 # show test comparison (success + fail), use -v, -vv or -vvv to get more informations
---comparator=console
+./vendor/bin/urltest tests/ --comparator=console
 
 # show only fail test comparison (by default), use -v, -vv or -vvv to get more informations
---errorcomparator=console
+./vendor/bin/urltest tests/ --errorcomparator=console
 ```
 
 ### Stop on error and resume your tests
@@ -55,26 +58,26 @@ You have 3 parameters to stop tests when a test fail, and resume tests from the 
 
 ```bash
 # stop when a test fail
---stop-on-error
+./vendor/bin/urltest tests/ --stop-on-error
 
 # when a test fail, continue testing since the one who fail (do not re-test previous ones)
---continue
+./vendor/bin/urltest tests/ --stop-on-error --continue
 
 # used with --continue, skip last fail test, and continue testing after this one (do not re-test previous ones)
---skip
+./vendor/bin/urltest tests/ --skip
 ```
 
 ### Dump configuration
 
 ```bash
 # dump only global configuration
-./bin/urltest --dump-configuration src/
+./vendor/bin/urltest --dump-configuration tests/
 
 # dump global configuration, and url_test_foo configuration
-./bin/urltest --dump-configuration src/ url_test_foo
+./vendor/bin/urltest --dump-configuration tests/ url_test_foo
 
 # dump global configuration, url_test_foo configuration and all configurations who id match preg pattern /^url_test_bar[0..9]{1,}$/
-./bin/urltest --dump-configuration src/ url_test_foo,/^url_test_bar[0..9]{1,}$/
+./vendor/bin/urltest --dump-configuration tests/ url_test_foo,/^url_test_bar[0..9]{1,}$/
 ```
 
 ### YAML test file example
@@ -90,7 +93,8 @@ testId:
     # 0 is first. don't use negative numbers, it's used by UrlTest
     position: 0
     request:
-        url: http://test.dev
+        # you can use parameters (see above) to configure what you need
+        url: '%domain%/foo'
         timeout: 30
         port: 80
         method: GET
@@ -154,4 +158,9 @@ urltest:
     abstractTestId:
         abstract: true
         url: http://test.dev
+
+# parameters can be used in almost all urltest configurations
+# define it's value here, and use it with %parameterName% in your configuration
+parameters:
+    domain: 'http://foo.local'
 ```
