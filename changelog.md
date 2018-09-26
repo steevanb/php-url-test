@@ -1,3 +1,8 @@
+### [0.0.13](../../compare/0.0.12...0.0.13) - 2018-09-26
+
+- Replace ResponseComparator by ResultReader
+- Replace `--comparator` and `--errorcomparator` by `--reader` in _urltest:test_
+
 ### [0.0.12](../../compare/0.0.11...0.0.12) - 2018-09-25
 
 - Move _CreateUrlTestServiceTrait_ from _steevanb\PhpUrlTest\Command_ to _steevanb\PhpUrlTest_

@@ -2,87 +2,94 @@
 
 declare(strict_types=1);
 
-namespace steevanb\PhpUrlTest\ResponseComparator;
+namespace steevanb\PhpUrlTest\ResultReader;
 
 use steevanb\PhpUrlTest\UrlTest;
 
-class ConsoleResponseComparator implements ResponseComparatorInterface
+class ConsoleResultReader implements ResultReaderInterface
 {
-    public function compare(
-        UrlTest $urlTest,
-        int $verbosity = ResponseComparatorInterface::VERBOSITY_NORMAL
-    ): ResponseComparatorInterface {
-        echo "\n";
-        $this->writeResult($urlTest);
-        echo " \e[1;37m" . $urlTest->getId() . "\e[00m "
-            . $urlTest->getConfiguration()->getRequest()->getMethod() . ' '
-            . $urlTest->getConfiguration()->getRequest()->getUrl() . ' '
-            . $urlTest->getResponse()->getTime() . 'ms';
-        if ($verbosity > ResponseComparatorInterface::VERBOSITY_NORMAL) {
-            echo " \033[00m";
+    use ShowUrlTestTrait;
+
+    public function read(array $urlTests, bool $showSuccess, bool $showError, int $verbosity): void
+    {
+        if ($verbosity >= ResultReaderService::VERBOSITY_NORMAL) {
+            /** @var UrlTest $urlTest */
+            foreach ($urlTests as $urlTest) {
+                if ($this->showUrlTest($urlTest, $showSuccess, $showError)) {
+                    if ($verbosity >= ResultReaderService::VERBOSITY_VERBOSE) {
+                        echo "\n";
+                    }
+                    $this->writeResult($urlTest);
+                    echo " \e[1m" . $urlTest->getId() . "\e[00m "
+                        . "\e[1;49;90m" . $urlTest->getConfiguration()->getRequest()->getMethod() . "\e[00m" . ' '
+                        . $urlTest->getConfiguration()->getRequest()->getUrl() . ' '
+                        . "\e[3m" . $urlTest->getResponse()->getTime() . 'ms' . "\e[00m";
+                    if ($verbosity >= ResultReaderService::VERBOSITY_VERBOSE) {
+                        echo " \033[00m";
+                    }
+                    echo "\n";
+
+                    $responseConfiguration = $urlTest->getConfiguration()->getResponse();
+                    $this
+                        ->writeDiff(
+                            'Url',
+                            $responseConfiguration->getUrl(),
+                            $urlTest->getResponse()->getUrl(),
+                            $verbosity
+                        )
+                        ->writeDiff(
+                            'Http code',
+                            $responseConfiguration->getCode(),
+                            $urlTest->getResponse()->getCode(),
+                            $verbosity
+                        )
+                        ->writeDiff(
+                            'Connections',
+                            $responseConfiguration->getNumConnects(),
+                            $urlTest->getResponse()->getNumConnects(),
+                            $verbosity
+                        )
+                        ->writeDiff(
+                            'Size',
+                            $responseConfiguration->getSize(),
+                            $urlTest->getResponse()->getSize(),
+                            $verbosity
+                        )
+                        ->writeDiff(
+                            'Content type',
+                            $responseConfiguration->getContentType(),
+                            $urlTest->getResponse()->getContentType(),
+                            $verbosity
+                        )
+                        ->writeDiff(
+                            'Header size',
+                            $responseConfiguration->getHeaderSize(),
+                            $urlTest->getResponse()->getHeaderSize(),
+                            $verbosity
+                        )
+                        ->writeHeadersDiff(
+                            $urlTest->getConfiguration()->getResponse()->getHeaders(),
+                            $urlTest->getConfiguration()->getResponse()->getUnallowedHeaders(),
+                            $urlTest->getResponse()->getHeaders(),
+                            $verbosity
+                        )
+                        ->writeDiff(
+                            'Body size',
+                            $responseConfiguration->getBodySize(),
+                            $urlTest->getResponse()->getBodySize(),
+                            $verbosity
+                        )
+                        ->writeBodyDiff($urlTest, $verbosity)
+                        ->writeRedirectionDiff($urlTest, $verbosity)
+                        ->writeRedirectionCountDiff($urlTest, $verbosity);
+                }
+            }
         }
-        echo "\n";
-
-        $responseConfiguration = $urlTest->getConfiguration()->getResponse();
-        $this
-            ->writeDiff(
-                'Url',
-                $responseConfiguration->getUrl(),
-                $urlTest->getResponse()->getUrl(),
-                $verbosity
-            )
-            ->writeDiff(
-                'Http code',
-                $responseConfiguration->getCode(),
-                $urlTest->getResponse()->getCode(),
-                $verbosity
-            )
-            ->writeDiff(
-                'Connections',
-                $responseConfiguration->getNumConnects(),
-                $urlTest->getResponse()->getNumConnects(),
-                $verbosity
-            )
-            ->writeDiff(
-                'Size',
-                $responseConfiguration->getSize(),
-                $urlTest->getResponse()->getSize(),
-                $verbosity
-            )
-            ->writeDiff(
-                'Content type',
-                $responseConfiguration->getContentType(),
-                $urlTest->getResponse()->getContentType(),
-                $verbosity
-            )
-            ->writeDiff(
-                'Header size',
-                $responseConfiguration->getHeaderSize(),
-                $urlTest->getResponse()->getHeaderSize(),
-                $verbosity
-            )
-            ->writeHeadersDiff(
-                $urlTest->getConfiguration()->getResponse()->getHeaders(),
-                $urlTest->getConfiguration()->getResponse()->getUnallowedHeaders(),
-                $urlTest->getResponse()->getHeaders(),
-                $verbosity
-            )
-            ->writeDiff(
-                'Body size',
-                $responseConfiguration->getBodySize(),
-                $urlTest->getResponse()->getBodySize(),
-                $verbosity
-            )
-            ->writeBodyDiff($urlTest, $verbosity)
-            ->writeRedirectionDiff($urlTest, $verbosity)
-            ->writeRedirectionCountDiff($urlTest, $verbosity);
-
-        return $this;
     }
 
     protected function writeRedirectionDiff(UrlTest $urlTest, int $verbosity): self
     {
-        if ($verbosity >= ResponseComparatorInterface::VERBOSITY_VERBOSE) {
+        if ($verbosity >= ResultReaderService::VERBOSITY_VERBOSE) {
             if ($urlTest->getConfiguration()->getRequest()->isAllowRedirect() === false) {
                 echo 'Redirection: ';
                 if ($urlTest->getResponse()->getCode() === 302) {
@@ -94,7 +101,7 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
                     $this->writeOkValue('none');
                 }
                 echo "\n";
-            } elseif ($verbosity >= ResponseComparatorInterface::VERBOSITY_VERBOSE) {
+            } elseif ($verbosity >= ResultReaderService::VERBOSITY_VERBOSE) {
                 echo 'Redirection: ';
                 echo ($urlTest->getResponse()->getRedirectCount() === 0)
                     ? 'none' :
@@ -108,7 +115,7 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
 
     protected function writeRedirectionCountDiff(UrlTest $urlTest, int $verbosity): self
     {
-        if ($verbosity >= ResponseComparatorInterface::VERBOSITY_VERBOSE) {
+        if ($verbosity >= ResultReaderService::VERBOSITY_VERBOSE) {
             $responseConfiguration = $urlTest->getConfiguration()->getResponse();
             if ($responseConfiguration->getRedirectCount() !== null) {
                 $this->writeDiff(
@@ -144,7 +151,7 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
                     echo $redirectionLabel;
                 }
                 echo "\n";
-            } elseif ($verbosity >= ResponseComparatorInterface::VERBOSITY_VERY_VERBOSE) {
+            } elseif ($verbosity >= ResultReaderService::VERBOSITY_VERY_VERBOSE) {
                 echo 'Redirections count: ' . $urlTest->getResponse()->getRedirectCount() . "\n";
             }
         }
@@ -154,7 +161,7 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
 
     protected function writeBodyDiff(UrlTest $urlTest, int $verbosity): self
     {
-        if ($verbosity >= ResponseComparatorInterface::VERBOSITY_VERBOSE) {
+        if ($verbosity >= ResultReaderService::VERBOSITY_VERBOSE) {
             $responseConfiguration = $urlTest->getConfiguration()->getResponse();
             if ($responseConfiguration->getBody() !== null) {
                 $expectedBody = $urlTest->getTransformedBody(
@@ -165,7 +172,7 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
                 if (
                     $expectedBody === $urlTest->getResponse()->getTransformedBody()
                 ) {
-                    if ($verbosity < ResponseComparatorInterface::VERBOSITY_DEBUG) {
+                    if ($verbosity < ResultReaderService::VERBOSITY_DEBUG) {
                         $this->writeOkValue('ok');
                     } else {
                         if ($urlTest->getResponse()->getTransformedBody() === null) {
@@ -176,7 +183,7 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
                         }
                     }
                 } else {
-                    if ($verbosity < ResponseComparatorInterface::VERBOSITY_DEBUG) {
+                    if ($verbosity < ResultReaderService::VERBOSITY_DEBUG) {
                         $this->writeBadValue('fail');
                     } else {
                         $this->writeBadValue('fail');
@@ -198,7 +205,7 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
                     }
                 }
                 echo "\n";
-            } elseif ($verbosity === ResponseComparatorInterface::VERBOSITY_DEBUG) {
+            } elseif ($verbosity === ResultReaderService::VERBOSITY_DEBUG) {
                 if (empty($urlTest->getResponse()->getBody())) {
                     echo 'Body: <empty>' . "\n";
                 } else {
@@ -212,7 +219,7 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
 
     protected function writeDiff(string $label, $expectedValue, $value, int $verbosity): self
     {
-        if ($verbosity >= ResponseComparatorInterface::VERBOSITY_VERBOSE) {
+        if ($verbosity >= ResultReaderService::VERBOSITY_VERBOSE) {
             if ($expectedValue !== null) {
                 echo $label . ': ';
                 if ($expectedValue !== $value) {
@@ -224,7 +231,7 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
                     $this->writeOkValue($value);
                 }
                 echo "\n";
-            } elseif ($expectedValue === null && $verbosity >= ResponseComparatorInterface::VERBOSITY_VERY_VERBOSE) {
+            } elseif ($expectedValue === null && $verbosity >= ResultReaderService::VERBOSITY_VERY_VERBOSE) {
                 echo $label . ': ' . $value;
                 echo "\n";
             }
@@ -240,7 +247,7 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
         int $verbosity
     ): self
     {
-        if ($verbosity >= ResponseComparatorInterface::VERBOSITY_VERBOSE) {
+        if ($verbosity >= ResultReaderService::VERBOSITY_VERBOSE) {
             echo 'Headers:' . "\n";
             foreach ($responseHeaders as $headerName => $headerValue) {
                 $headerWrited = false;
@@ -266,7 +273,7 @@ class ConsoleResponseComparator implements ResponseComparatorInterface
                     $headerWrited = true;
                 }
 
-                if ($verbosity >= ResponseComparatorInterface::VERBOSITY_VERY_VERBOSE && $headerWrited === false) {
+                if ($verbosity >= ResultReaderService::VERBOSITY_VERY_VERBOSE && $headerWrited === false) {
                     echo '  ' . $headerName . ': ' . $headerValue . "\n";
                 }
             }

@@ -14,11 +14,10 @@ use Symfony\Component\Console\{
 };
 use steevanb\PhpUrlTest\{
     CreateUrlTestServiceTrait,
-    ResponseComparator\ResponseComparatorInterface,
-    ResponseComparator\ResponseComparatorService,
+    ResultReader\ConsoleResultReader,
+    ResultReader\ResultReaderService,
     UrlTest,
-    UrlTestService
-};
+    UrlTestService};
 
 class UrlTestCommand extends Command
 {
@@ -51,21 +50,14 @@ class UrlTestCommand extends Command
             ->setName('urltest:test')
             ->addOption('parallel', 'p', InputOption::VALUE_OPTIONAL, 'Set parallel tests number.', 1)
             ->addOption(
-                'comparator',
-                'c',
+                'reader',
+                null,
                 InputOption::VALUE_OPTIONAL,
-                'Comparator name to compare response with expected one'
-            )
-            ->addOption(
-                'errorcomparator',
-                'ec',
-                InputOption::VALUE_OPTIONAL,
-                'Comparator name to compare response with expected one when test fail',
-                'console'
+                'Reader FQCN to read test results when finished. --reader=Foo\\Bar,Foo\\Baz#success,Foo\\Boo#error'
             )
             ->addOption(
                 'configuration',
-                'conf',
+                'c',
                 InputOption::VALUE_OPTIONAL,
                 'Configuration file name'
             )
@@ -103,8 +95,7 @@ class UrlTestCommand extends Command
         if ($input->getOption('parallel') <= 1) {
             $this->compareResponses(
                 $service->getTests($ids),
-                $input->getOption('comparator'),
-                $input->getOption('errorcomparator'),
+                $input->getOption('reader'),
                 $output
             );
         } else {
@@ -135,37 +126,42 @@ class UrlTestCommand extends Command
         return $this;
     }
 
-    protected function getResponseComparatorClassName(string $comparator): string
-    {
-        return substr($comparator, -10) !== 'ResponseComparator'
-            ? 'steevanb\\PhpUrlTest\\ResponseComparator\\' . ucfirst($comparator) . 'ResponseComparator'
-            : $comparator;
-    }
-
     protected function compareResponses(
         array $urlTests,
-        ?string $comparator,
-        ?string $errorComparator,
+        ?string $reader,
         OutputInterface $output
     ): self {
-        $comparatorService = new ResponseComparatorService();
-        if ($comparator !== null) {
-            $className = $this->getResponseComparatorClassName($comparator);
-            $comparatorService
-                ->addComparator($comparator, new $className())
-                ->setDefaultComparatorId($comparator);
+        $readerService = new ResultReaderService();
+        if ($reader === null) {
+            $reader = ConsoleResultReader::class . '#error';
         }
-        if ($errorComparator !== null) {
-            $className = $this->getResponseComparatorClassName($errorComparator);
-            $comparatorService
-                ->addComparator($errorComparator, new $className())
-                ->setDefaultErrorComparatorId($errorComparator);
-        }
-        $verbosity = $this->getVerbosity($output);
 
-        foreach ($urlTests as $urlTest) {
-            $comparatorService->compare($urlTest, $verbosity);
+        $verbosity = $this->getVerbosity($output);
+        foreach (explode(',', $reader) as $readerFqcn) {
+            if (strpos($readerFqcn, '#') !== false) {
+                list($readerFqcn, $level) = explode('#', $readerFqcn);
+                switch ($level) {
+                    case 'success':
+                        $success = true;
+                        $error = false;
+                        break;
+                    case 'error':
+                        $success = false;
+                        $error = true;
+                        break;
+                    default:
+                        throw new \Exception(
+                            'Unknown result reader level "' . $level . '", should be "success" or "error".'
+                        );
+                }
+            } else {
+                $success = true;
+                $error = true;
+            }
+            $readerService->addReader($readerFqcn, $success, $error, $verbosity);
         }
+
+        $readerService->read($urlTests);
 
         return $this;
     }
@@ -183,17 +179,20 @@ class UrlTestCommand extends Command
     protected function getVerbosity(OutputInterface $output): int
     {
         switch ($output->getVerbosity()) {
+            case OutputInterface::VERBOSITY_QUIET:
+                $return = ResultReaderService::VERBOSITY_QUIET;
+                break;
             case OutputInterface::VERBOSITY_NORMAL:
-                $return = ResponseComparatorInterface::VERBOSITY_NORMAL;
+                $return = ResultReaderService::VERBOSITY_NORMAL;
                 break;
             case OutputInterface::VERBOSITY_VERBOSE:
-                $return = ResponseComparatorInterface::VERBOSITY_VERBOSE;
+                $return = ResultReaderService::VERBOSITY_VERBOSE;
                 break;
             case OutputInterface::VERBOSITY_VERY_VERBOSE:
-                $return = ResponseComparatorInterface::VERBOSITY_VERY_VERBOSE;
+                $return = ResultReaderService::VERBOSITY_VERY_VERBOSE;
                 break;
             case OutputInterface::VERBOSITY_DEBUG:
-                $return = ResponseComparatorInterface::VERBOSITY_DEBUG;
+                $return = ResultReaderService::VERBOSITY_DEBUG;
                 break;
             default:
                 throw new \Exception('Unknow verbosity "' . $output->getVerbosity() . '".');

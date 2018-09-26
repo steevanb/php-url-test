@@ -135,14 +135,14 @@ class Configuration
                     ?? $default['request']['timeout']
                     ?? $defaultConfiguration->getRequest()->getTimeout()
             )
-            ->setAllowedTypes('timeout', 'int', 'string')
+            ->setAllowedTypes('timeout', ['int', 'string'])
             ->setDefault(
                 'port',
                 $parent['request']['port']
                     ?? $default['request']['port']
                     ?? $defaultConfiguration->getRequest()->getPort()
             )
-            ->setAllowedTypes('port', 'int', 'string')
+            ->setAllowedTypes('port', ['int', 'string'])
             ->setDefault(
                 'method',
                 $parent['request']['method']

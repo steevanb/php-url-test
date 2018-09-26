@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace steevanb\PhpUrlTest\Command;
 
-use steevanb\PhpUrlTest\Configuration\Exporter\YamlExporter;
+use steevanb\PhpUrlTest\{
+    Configuration\Exporter\YamlExporter,
+    CreateUrlTestServiceTrait
+};
 use Symfony\Component\Console\{
     Command\Command,
     Input\InputArgument,

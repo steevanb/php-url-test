@@ -1,5 +1,5 @@
-[![version](https://img.shields.io/badge/alpha-0.0.12-red.svg)](https://github.com/steevanb/php-url-test/tree/0.0.12)
-![Lines](https://img.shields.io/badge/code%20lines-3668-green.svg)
+[![version](https://img.shields.io/badge/alpha-0.0.13-red.svg)](https://github.com/steevanb/php-url-test/tree/0.0.13)
+![Lines](https://img.shields.io/badge/code%20lines-3639-green.svg)
 ![Total Downloads](https://poser.pugx.org/steevanb/php-url-test/downloads)
 
 php-url-test
@@ -18,7 +18,7 @@ Tests all urls of your application
 Don't allow to update minor/bug fix versions, as we can break compatibility between bug fixes until final release.
 
 ```bash
-composer require --dev "steevanb/php-url-test": "0.0.12"
+composer require --dev steevanb/php-url-test 0.0.13
 ```
 
 ### Launch tests
@@ -42,14 +42,23 @@ composer require --dev "steevanb/php-url-test": "0.0.12"
 # you can create a configuration file by developer and use parameters to configure it
 ./vendor/bin/urltest tests/ --configuration=tests/foo.yml
 ```
-### Show success or fail informations
+### Read test results and show informations
 
 ```bash
-# show test comparison (success + fail), use -v, -vv or -vvv to get more informations
-./vendor/bin/urltest tests/ --comparator=console
+# show only failed test comparison (by default), use -v, -vv or -vvv to get more informations
+./vendor/bin/urltest tests/ --reader=steevanb\\PhpUrlTest\\ResultReader\\ConsoleResultReader#error
 
-# show only fail test comparison (by default), use -v, -vv or -vvv to get more informations
-./vendor/bin/urltest tests/ --errorcomparator=console
+# show only passed test comparison, use -v, -vv or -vvv to get more informations
+./vendor/bin/urltest tests/ --reader=steevanb\\PhpUrlTest\\ResultReader\\ConsoleResultReader#success
+```
+
+You can create your own ResultReader, by implementing _steevanb\PhpUrlTest\ResultReader\ResultReaderInterface_.
+
+Then you can use it as you use ConsoleResultReader, with `--reader` parameter.
+
+You can separate readers by `,`:
+```bash
+./vendor/bin/urltest tests/ --reader=steevanb\\PhpUrlTest\\ResultReader\\ConsoleResultReader#error,Foo\\Bar#success,Foo\\Baz
 ```
 
 ### Stop on error and resume your tests
