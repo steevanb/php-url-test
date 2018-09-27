@@ -1,5 +1,5 @@
-[![version](https://img.shields.io/badge/alpha-0.0.13-red.svg)](https://github.com/steevanb/php-url-test/tree/0.0.13)
-![Lines](https://img.shields.io/badge/code%20lines-3639-green.svg)
+[![version](https://img.shields.io/badge/alpha-0.0.14-red.svg)](https://github.com/steevanb/php-url-test/tree/0.0.14)
+![Lines](https://img.shields.io/badge/code%20lines-3656-green.svg)
 ![Total Downloads](https://poser.pugx.org/steevanb/php-url-test/downloads)
 
 php-url-test
@@ -18,7 +18,7 @@ Tests all urls of your application
 Don't allow to update minor/bug fix versions, as we can break compatibility between bug fixes until final release.
 
 ```bash
-composer require --dev steevanb/php-url-test 0.0.13
+composer require --dev steevanb/php-url-test 0.0.14
 ```
 
 ### Launch tests

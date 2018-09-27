@@ -1,3 +1,8 @@
+### [0.0.14](../../compare/0.0.13...0.0.14) - 2018-09-27
+
+- Fix `_defaults.parent` configuration was not taken into account
+- Fix PHP error when no tests found in `urltest:test` Command
+
 ### [0.0.13](../../compare/0.0.12...0.0.13) - 2018-09-26
 
 - Replace ResponseComparator by ResultReader

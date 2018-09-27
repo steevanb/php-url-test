@@ -742,10 +742,17 @@ class UrlTestService
         array $defaultConfiguration = []
     ): Configuration {
         try {
+            $parentConfiguration = [];
+            if (array_key_exists('parent', $data)) {
+                $parentConfiguration = $this->getAbstractTest($data['parent']);
+            } elseif (array_key_exists('parent', $defaultConfiguration)) {
+                $parentConfiguration = $this->getAbstractTest($defaultConfiguration['parent']);
+            }
+
             $return = Configuration::create(
                 $urlTestId,
                 $data,
-                array_key_exists('parent', $data) ? $this->getAbstractTest($data['parent']) : [],
+                $parentConfiguration,
                 $defaultConfiguration,
                 $this->getParameters()
             );

@@ -89,25 +89,30 @@ class UrlTestCommand extends Command
                 ->setParallelVerbosity($this->getVerbosity($output));
         }
 
-        $this->initProgressBar($output, $service, $ids, $input->getOption('progress') === 'true');
-        $return = $service->executeTests($ids) === true ? 0 : 1;
-
-        if ($input->getOption('parallel') <= 1) {
-            $this->compareResponses(
-                $service->getTests($ids),
-                $input->getOption('reader'),
-                $output
-            );
+        if ($service->countTests($ids) === 0) {
+            $output->writeln('<comment>No UrlTest found.</comment>');
+            $return = 0;
         } else {
-            $this->showParallelResponses($service->getTests($ids), $output);
-        }
+            $this->initProgressBar($output, $service, $ids, $input->getOption('progress') === 'true');
+            $return = $service->executeTests($ids) === true ? 0 : 1;
 
-        if ($input->getOption('stop-on-error') && $service->hasContinueData()) {
-            $output->writeln('');
-            $output->writeln(
-                "\e[43m\e[1;30m Tests stopped, use --continue to resume since last fail, "
-                . "or --skip to resume after last fail. \e[00m"
-            );
+            if ($input->getOption('parallel') <= 1) {
+                $this->compareResponses(
+                    $service->getTests($ids),
+                    $input->getOption('reader'),
+                    $output
+                );
+            } else {
+                $this->showParallelResponses($service->getTests($ids), $output);
+            }
+
+            if ($input->getOption('stop-on-error') && $service->hasContinueData()) {
+                $output->writeln('');
+                $output->writeln(
+                    "\e[43m\e[1;30m Tests stopped, use --continue to resume since last fail, "
+                    . "or --skip to resume after last fail. \e[00m"
+                );
+            }
         }
 
         return $return;
