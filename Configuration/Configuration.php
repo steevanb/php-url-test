@@ -90,7 +90,7 @@ class Configuration
         $return = $data;
         if ($data !== null) {
             foreach ($parameters as $name => $value) {
-                $return = str_replace('%' . $name . '%', $value, $data);
+                $return = str_replace('%' . $name . '%', $value, $return);
             }
         }
 
