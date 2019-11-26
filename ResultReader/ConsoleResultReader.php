@@ -19,15 +19,12 @@ class ConsoleResultReader implements ResultReaderInterface
                     if ($verbosity >= ResultReaderService::VERBOSITY_VERBOSE) {
                         echo "\n";
                     }
-                    $this->writeResult($urlTest);
-                    echo " \e[1m" . $urlTest->getId() . "\e[00m "
-                        . "\e[1;49;90m" . $urlTest->getConfiguration()->getRequest()->getMethod() . "\e[00m" . ' '
-                        . $urlTest->getConfiguration()->getRequest()->getUrl() . ' '
-                        . "\e[3m" . $urlTest->getResponse()->getTime() . 'ms' . "\e[00m";
-                    if ($verbosity >= ResultReaderService::VERBOSITY_VERBOSE) {
-                        echo " \033[00m";
+
+                    $this->writeResult($urlTest, $verbosity);
+
+                    if (is_string($urlTest->getResponse()->getErrorMessage())) {
+                        continue;
                     }
-                    echo "\n";
 
                     $responseConfiguration = $urlTest->getConfiguration()->getResponse();
                     $this
@@ -247,7 +244,7 @@ class ConsoleResultReader implements ResultReaderInterface
         int $verbosity
     ): self
     {
-        if ($verbosity >= ResultReaderService::VERBOSITY_VERBOSE) {
+        if ($verbosity >= ResultReaderService::VERBOSITY_VERBOSE && count($allowedHeaders) > 0) {
             echo 'Headers:' . "\n";
             foreach ($responseHeaders as $headerName => $headerValue) {
                 $headerWrited = false;
@@ -295,33 +292,73 @@ class ConsoleResultReader implements ResultReaderInterface
 
     protected function writeOkValue($value): self
     {
-        echo "\033[32m" . $value . "\033[00m";
+        echo "\e[32m" . $value . "\e[00m";
 
         return $this;
     }
 
     protected function writeExpectedValue($value): self
     {
-        echo "\033[33m" . $value . "\033[00m";
+        echo "\e[33m" . $value . "\e[00m";
 
         return $this;
     }
 
     protected function writeBadValue($value): self
     {
-        echo "\033[31m" . $value . "\033[00m";
+        echo "\e[31m" . (is_null($value) ? 'NULL' : $value) . "\e[00m";
 
         return $this;
     }
 
-    protected function writeResult(UrlTest $urlTest): self
+    protected function writeResult(UrlTest $urlTest, int $verbosity): self
     {
         if ($urlTest->isValid()) {
-            echo "\033[42m\033[1;37m OK \033[0m";
+            echo "\e[42m\e[1;37m OK \e[0m";
         } else {
-            echo "\033[41m\033[1;37m FAIL \033[0m";
+            echo "\e[41m\e[1;37m FAIL \e[0m";
+        }
+
+        echo
+            " \e[1m" . $urlTest->getId() . "\e[00m "
+            . "\e[1;49;90m" . $urlTest->getConfiguration()->getRequest()->getMethod() . "\e[00m" . ' '
+            . $this->getUrlWithPort(
+                $urlTest->getConfiguration()->getRequest()->getUrl(),
+                $urlTest->getConfiguration()->getRequest()->getPort()
+            )
+            . ' '
+            . "\e[3m" . $urlTest->getResponse()->getTime() . 'ms' . "\e[00m";
+        if ($verbosity >= ResultReaderService::VERBOSITY_VERBOSE) {
+            echo " \e[00m";
+        }
+
+        echo "\n";
+
+        if (
+            is_string($urlTest->getResponse()->getErrorMessage())
+            && $verbosity >= ResultReaderService::VERBOSITY_VERBOSE
+        ) {
+            echo "\e[31m" . $urlTest->getResponse()->getErrorMessage() . "\e[00m\n";
         }
 
         return $this;
+    }
+
+    protected function getUrlWithPort(string $url, int $port): string
+    {
+        if ($port === 80) {
+            return $url;
+        }
+
+        $posDomainEnd = strpos(
+            $url,
+            '/',
+            strpos($url, '//')
+        );
+        if ($posDomainEnd === false) {
+            return $url;
+        }
+
+        return substr($url, 0, $posDomainEnd) . ':' . (string) $port . substr($url, $posDomainEnd);
     }
 }
