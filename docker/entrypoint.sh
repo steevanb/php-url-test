@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
 
-vendor/bin/urltest \
+/var/urltest/bin/urltest \
     ${URLTEST_PARAMETERS} \
     /var/tests
