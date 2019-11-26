@@ -353,7 +353,7 @@ class ConsoleResultReader implements ResultReaderInterface
         $posDomainEnd = strpos(
             $url,
             '/',
-            strpos($url, '//')
+            strpos($url, '//') + 2
         );
         if ($posDomainEnd === false) {
             return $url;
