@@ -1,3 +1,12 @@
+### [0.0.15](../../compare/0.0.14...0.0.15) - 2019-11-26
+
+- Fix when more than 1 parameter is configured in `urltest.yml`.
+- Console output: don't show `Headers:` result when no headers.
+- Console output: write `NULL` for values when is null instead of empty string.
+- Console output: write HTTP query error message when possible.
+- Console output: write port in url.
+- Add Docker image.
+
 ### [0.0.14](../../compare/0.0.13...0.0.14) - 2018-09-27
 
 - Fix `_defaults.parent` configuration was not taken into account
