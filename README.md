@@ -1,9 +1,8 @@
-[![version](https://img.shields.io/badge/alpha-0.0.14-red.svg)](https://github.com/steevanb/php-url-test/tree/0.0.14)
+[![version](https://img.shields.io/badge/alpha-0.0.15-red.svg)](https://github.com/steevanb/php-url-test/tree/0.0.15)
 ![Lines](https://img.shields.io/badge/code%20lines-3656-green.svg)
 ![Total Downloads](https://poser.pugx.org/steevanb/php-url-test/downloads)
 
-php-url-test
-============
+## php-url-test
 
 Tests all urls of your application
 
@@ -11,45 +10,59 @@ Tests all urls of your application
 
 [Changelog](changelog.md)
 
-### Installation
+## Installation
 
 /!\ Keep in mind this is an alpha version /!\
 
 Don't allow to update minor/bug fix versions, as we can break compatibility between bug fixes until final release.
 
 ```bash
-composer require --dev steevanb/php-url-test 0.0.14
+composer require --dev steevanb/php-url-test 0.0.15
 ```
 
-### Launch tests
+## Use it with official Docker image
+
+Instead of install it in your project with Composer, you can use official Docker image.
+
+Create a volume with your test configurations into `/var/tests`.
+
+You can use `URLTEST_PARAMETERS` env variable to add parameters to `urltest` command.
+```bash
+docker run \
+    -v /var/www/tests:/var/tests \
+    -e URLTEST_PARAMETERS="--ansi --configuration=/var/tests/urltest.yml -vvv" \
+    steevanb/php-url-test:0.0.15
+```
+
+## Launch tests
 
 ```bash
 # scan tests/ to find *.urltest.yml files, --recursive=false or -r=false to not do it recursively
 # if urltest.yml file is found into tests/ (not in sub directories), it will be used for default configuration file
-./vendor/bin/urltest tests/
+vendor/bin/urltest tests/
 
 # test url_test_foo
-./vendor/bin/urltest tests/ url_test_foo
+vendor/bin/urltest tests/ url_test_foo
 
 # test url_test_foo and all tests who match preg pattern /^url_test_bar[0..9]{1,}$/
-./vendor/bin/urltest tests/ url_test_foo,/^url_test_bar[0..9]{1,}$/
+vendor/bin/urltest tests/ url_test_foo,/^url_test_bar[0..9]{1,}$/
 
 # launch tests from foo.urltest.yml only
-./vendor/bin/urltest tests/Tests/foo.urltest.yml
+vendor/bin/urltest tests/Tests/foo.urltest.yml
 
 # don't use tests/urltest.yml, use another configuration file
 # if you are a few developers with different domain for each developer,
 # you can create a configuration file by developer and use parameters to configure it
-./vendor/bin/urltest tests/ --configuration=tests/foo.yml
+vendor/bin/urltest tests/ --configuration=tests/foo.yml
 ```
-### Read test results and show informations
+## Read test results and show informations
 
 ```bash
 # show only failed test comparison (by default), use -v, -vv or -vvv to get more informations
-./vendor/bin/urltest tests/ --reader=steevanb\\PhpUrlTest\\ResultReader\\ConsoleResultReader#error
+vendor/bin/urltest tests/ --reader=steevanb\\PhpUrlTest\\ResultReader\\ConsoleResultReader#error
 
 # show only passed test comparison, use -v, -vv or -vvv to get more informations
-./vendor/bin/urltest tests/ --reader=steevanb\\PhpUrlTest\\ResultReader\\ConsoleResultReader#success
+vendor/bin/urltest tests/ --reader=steevanb\\PhpUrlTest\\ResultReader\\ConsoleResultReader#success
 ```
 
 You can create your own ResultReader, by implementing _steevanb\PhpUrlTest\ResultReader\ResultReaderInterface_.
@@ -58,38 +71,38 @@ Then you can use it as you use ConsoleResultReader, with `--reader` parameter.
 
 You can separate readers by `,`:
 ```bash
-./vendor/bin/urltest tests/ --reader=steevanb\\PhpUrlTest\\ResultReader\\ConsoleResultReader#error,Foo\\Bar#success,Foo\\Baz
+vendor/bin/urltest tests/ --reader=steevanb\\PhpUrlTest\\ResultReader\\ConsoleResultReader#error,Foo\\Bar#success,Foo\\Baz
 ```
 
-### Stop on error and resume your tests
+## Stop on error and resume your tests
 
 You have 3 parameters to stop tests when a test fail, and resume tests from the one who fail, or skip it and continue after this one :
 
 ```bash
 # stop when a test fail
-./vendor/bin/urltest tests/ --stop-on-error
+vendor/bin/urltest tests/ --stop-on-error
 
 # when a test fail, continue testing since the one who fail (do not re-test previous ones)
-./vendor/bin/urltest tests/ --stop-on-error --continue
+vendor/bin/urltest tests/ --stop-on-error --continue
 
 # used with --continue, skip last fail test, and continue testing after this one (do not re-test previous ones)
-./vendor/bin/urltest tests/ --skip
+vendor/bin/urltest tests/ --skip
 ```
 
-### Dump configuration
+## Dump configuration
 
 ```bash
 # dump only global configuration
-./vendor/bin/urltest --dump-configuration tests/
+vendor/bin/urltest --dump-configuration tests/
 
 # dump global configuration, and url_test_foo configuration
-./vendor/bin/urltest --dump-configuration tests/ url_test_foo
+vendor/bin/urltest --dump-configuration tests/ url_test_foo
 
 # dump global configuration, url_test_foo configuration and all configurations who id match preg pattern /^url_test_bar[0..9]{1,}$/
-./vendor/bin/urltest --dump-configuration tests/ url_test_foo,/^url_test_bar[0..9]{1,}$/
+vendor/bin/urltest --dump-configuration tests/ url_test_foo,/^url_test_bar[0..9]{1,}$/
 ```
 
-### YAML test file example
+## YAML test file example
 
 Only _request.url_ is required.
 
@@ -155,7 +168,7 @@ _defaults:
     # this configurations will be applied to all tests in this file, if value is not defined, null or ~
 ```
 
-### Global configuration file
+## Global configuration file
 
 You can define global configurations in _urltest.yml_.
 
