@@ -24,13 +24,14 @@ composer require --dev steevanb/php-url-test 0.0.15
 
 Instead of install it in your project with Composer, you can use official Docker image.
 
-Create a volume with your test configurations into `/var/tests`.
-
-You can use `URLTEST_PARAMETERS` env variable to add parameters to `urltest` command.
 ```bash
 docker run \
+    # Create a volume with your test configurations into /var/tests
     -v /var/www/tests:/var/tests \
+    # You can use `URLTEST_PARAMETERS` env variable to add parameters to `urltest` command.
     -e URLTEST_PARAMETERS="--ansi --configuration=/var/tests/urltest.yml -vvv" \
+    # Allow this container to access host domains
+    --net=host \
     steevanb/php-url-test:0.0.15
 ```
 
