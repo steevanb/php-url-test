@@ -193,20 +193,20 @@ class ConsoleResultReader implements ResultReaderInterface
                         }
                         echo "\n";
                         echo 'Response body: ';
-                        if (empty($urlTest->getResponse()->getBody())) {
+                        if ($urlTest->getResponse()->getTransformedBody() === null) {
                             $this->writeBadValue('<empty>');
                         } else {
                             echo "\n";
-                            $this->writeBadValue($urlTest->getResponse()->getBody());
+                            $this->writeBadValue($urlTest->getResponse()->getTransformedBody());
                         }
                     }
                 }
                 echo "\n";
             } elseif ($verbosity === ResultReaderService::VERBOSITY_DEBUG) {
-                if (empty($urlTest->getResponse()->getBody())) {
+                if ($urlTest->getResponse()->getTransformedBody() === null) {
                     echo 'Body: <empty>' . "\n";
                 } else {
-                    echo 'Body:' . "\n" . $urlTest->getResponse()->getBody() . "\n";
+                    echo 'Body:' . "\n" . $urlTest->getResponse()->getTransformedBody() . "\n";
                 }
             }
         }
