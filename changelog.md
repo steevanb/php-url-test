@@ -1,3 +1,7 @@
+### [0.0.16](../../compare/0.0.15...0.0.16) - 2020-01-07
+
+- Add `uuid` ResponseBodyTransformer.
+
 ### [0.0.15](../../compare/0.0.14...0.0.15) - 2019-11-26
 
 - Fix when more than 1 parameter is configured in `urltest.yml`.
