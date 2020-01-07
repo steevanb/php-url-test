@@ -1,5 +1,5 @@
-[![version](https://img.shields.io/badge/alpha-0.0.15-red.svg)](https://github.com/steevanb/php-url-test/tree/0.0.15)
-![Lines](https://img.shields.io/badge/code%20lines-3656-green.svg)
+[![version](https://img.shields.io/badge/alpha-0.0.16-red.svg)](https://github.com/steevanb/php-url-test/tree/0.0.16)
+![Lines](https://img.shields.io/badge/code%20lines-3800-green.svg)
 ![Total Downloads](https://poser.pugx.org/steevanb/php-url-test/downloads)
 
 ## php-url-test
@@ -17,7 +17,7 @@ Tests all urls of your application
 Don't allow to update minor/bug fix versions, as we can break compatibility between bug fixes until final release.
 
 ```bash
-composer require --dev steevanb/php-url-test 0.0.15
+composer require --dev steevanb/php-url-test 0.0.16
 ```
 
 ## Use it with official Docker image
@@ -32,7 +32,7 @@ docker run \
     -e URLTEST_PARAMETERS="--ansi --configuration=/var/tests/urltest.yml -vvv" \
     # Allow this container to access host domains
     --net=host \
-    steevanb/php-url-test:0.0.15
+    steevanb/php-url-test:0.0.16
 ```
 
 ## Launch tests
