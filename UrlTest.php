@@ -7,7 +7,8 @@ namespace steevanb\PhpUrlTest;
 use steevanb\PhpUrlTest\{
     Configuration\Configuration,
     ResponseBodyTransformer\ResponseBodyTransformerInterface,
-    ResponseBodyTransformer\JsonResponseBodyTransformer
+    ResponseBodyTransformer\JsonResponseBodyTransformer,
+    ResponseBodyTransformer\UuidResponseBodyTransformer
 };
 
 class UrlTest
@@ -34,7 +35,10 @@ class UrlTest
     {
         $this->id = $id;
         $this->configuration = $configuration;
-        $this->addResponseBodyTransformer('json', new JsonResponseBodyTransformer());
+
+        $this
+            ->addResponseBodyTransformer('json', new JsonResponseBodyTransformer())
+            ->addResponseBodyTransformer('uuid', new UuidResponseBodyTransformer());
     }
 
     public function getId(): string

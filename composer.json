@@ -4,7 +4,9 @@
     "type": "lib",
     "description": "Tests all urls of your application",
     "autoload": {
-        "psr-4": { "steevanb\\PhpUrlTest\\": "" }
+        "psr-4": {
+            "steevanb\\PhpUrlTest\\": ""
+        }
     },
     "require": {
         "php": "^7.1",
@@ -13,11 +15,5 @@
         "symfony/console": "^3.2||^4.0",
         "symfony/options-resolver": "^3.2||^4.0"
     },
-    "bin": ["bin/urltest"],
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/steevanb/php-url-test.git"
-        }
-    ]
+    "bin": ["bin/urltest"]
 }

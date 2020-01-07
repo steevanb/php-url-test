@@ -169,6 +169,22 @@ _defaults:
     # this configurations will be applied to all tests in this file, if value is not defined, null or ~
 ```
 
+## ResponseBodyTransformer
+
+A response body transformer will modify response body at 2 differents steps:
+ * `expectedResponse.body.transformer`: transform expected response
+ * `response.body.transformer`: transform response
+
+List of available transformers:
+ * `json`: try to decode and reencode value, will transform response to null if data is not a valid JSON
+ * `uuid`: try to decode response (should be a valid JSON) and replace all UUID value by `____UUID____`
+
+## Create your own ResponseBodyTransformer
+
+To create your own ResponseBodyTransformer, you have to do this steps:
+ * Create a class who implement `steevanb\PhpUrlTest\ResponseBodyTransformer\ResponseBodyTransformerInterface`
+ * Register your ResponseBodyTransformer with `UrlTest::addResponseBodyTransformer()`
+
 ## Global configuration file
 
 You can define global configurations in _urltest.yml_.
