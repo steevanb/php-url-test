@@ -29,12 +29,12 @@ class Configuration
             ->setPort(static::replaceIntParameters($configuration['request']['port'], $parameters))
             ->setMethod(static::replaceParameters($configuration['request']['method'], $parameters))
             ->setUserAgent(static::replaceParameters($configuration['request']['userAgent'], $parameters))
-            ->setPostData($configuration['request']['postData'])
+            ->setPostData(static::replaceParameters($configuration['request']['postData'], $parameters))
             ->setReferer(static::replaceParameters($configuration['request']['referer'], $parameters))
             ->setAllowRedirect(
                 (bool) static::replaceParameters($configuration['request']['allowRedirect'], $parameters)
             )
-            ->setHeaders($configuration['request']['headers']);
+            ->setHeaders(static::replaceParameters($configuration['request']['headers'], $parameters));
 
         $return
             ->getResponse()
@@ -56,12 +56,16 @@ class Configuration
             ->setRedirectCount(
                 static::replaceIntParameters($configuration['expectedResponse']['redirect']['count'], $parameters)
             )
-            ->setHeaders($configuration['expectedResponse']['header']['headers'])
-            ->setUnallowedHeaders($configuration['expectedResponse']['header']['unallowedHeaders'])
+            ->setHeaders(
+                static::replaceParameters($configuration['expectedResponse']['header']['headers'], $parameters)
+            )
+            ->setUnallowedHeaders(
+                static::replaceParameters($configuration['expectedResponse']['header']['unallowedHeaders'], $parameters)
+            )
             ->setHeaderSize(
                 static::replaceIntParameters($configuration['expectedResponse']['header']['size'], $parameters)
             )
-            ->setBody($configuration['expectedResponse']['body']['content'])
+            ->setBody(static::replaceParameters($configuration['expectedResponse']['body']['content'], $parameters))
             ->setBodySize(
                 static::replaceIntParameters($configuration['expectedResponse']['body']['size'], $parameters)
             )
@@ -90,7 +94,13 @@ class Configuration
         $return = $data;
         if ($data !== null) {
             foreach ($parameters as $name => $value) {
-                $return = str_replace('%' . $name . '%', $value, $return);
+                if (is_array($data)) {
+                    foreach ($data as $returnKey => $returnValue) {
+                        $return[$returnKey] = str_replace('%' . $name . '%', $value, $returnValue);
+                    }
+                } else {
+                    $return = str_replace('%' . $name . '%', $value, $return);
+                }
             }
         }
 

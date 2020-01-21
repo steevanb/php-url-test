@@ -1,3 +1,12 @@
+### [0.0.17](../../compare/0.0.16...0.0.17) - 2020-01-21
+
+- Replace parameters where it was missing:
+  * request.postData
+  * request.headers
+  * expectedResponse.header.headers
+  * expectedResponse.header.unallowedHeaders
+  * expectedResponse.body.content
+
 ### [0.0.16](../../compare/0.0.15...0.0.16) - 2020-01-07
 
 - Add `uuid` ResponseBodyTransformer.
