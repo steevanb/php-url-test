@@ -73,7 +73,8 @@ class UrlTestService
         }
 
         foreach ($configurations['urltest'] ?? [] as $id => $configuration) {
-            if ($configuration['abstract'] ?? false === true) {
+            // parenthesis for a phpcs bug who interpret it as yoda condition
+            if (($configuration['abstract'] ?? false) === true) {
                 $this->addAbstractTest($id, $configuration);
             } else {
                 $this->addTest($id, new UrlTest($id, $this->createConfiguration($configuration, $fileName, $id)));
@@ -160,7 +161,7 @@ class UrlTestService
 
             foreach ($configurations as $id => $data) {
                 $this->assertTestId($id);
-                $id = (string)$id;
+                $id = (string) $id;
                 $this->addTest(
                     $id,
                     new UrlTest($id, $this->createConfiguration($data, $fileName, $id, $defaultConfiguration))
@@ -502,7 +503,7 @@ class UrlTestService
             }
             if (is_dir($directory . $entry) && $recursive) {
                 $this->addTestDirectoryAndRegisterDirectory($directory . $entry, true, false);
-            } elseif (is_file($directory. $entry) && substr($entry, -12) === '.urltest.yml') {
+            } elseif (is_file($directory . $entry) && substr($entry, -12) === '.urltest.yml') {
                 $this->addTestFile($directory . $entry);
             }
         }

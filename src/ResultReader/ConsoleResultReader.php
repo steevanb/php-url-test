@@ -185,7 +185,7 @@ class ConsoleResultReader implements ResultReaderInterface
                     } else {
                         $this->writeBadValue('fail');
                         echo "\n" . 'Expected body: ';
-                        if (empty($expectedBody)) {
+                        if ($expectedBody === null || trim($expectedBody) === '') {
                             $this->writeExpectedValue('<empty>');
                         } else {
                             echo "\n";
@@ -242,15 +242,14 @@ class ConsoleResultReader implements ResultReaderInterface
         ?array $unallowedHeaders,
         array $responseHeaders,
         int $verbosity
-    ): self
-    {
+    ): self {
         if ($verbosity >= ResultReaderService::VERBOSITY_VERBOSE && count($allowedHeaders) > 0) {
             echo 'Headers:' . "\n";
             foreach ($responseHeaders as $headerName => $headerValue) {
                 $headerWrited = false;
                 foreach ($allowedHeaders ?? [] as $allowedHeaderName => $allowedHeaderValue) {
                     if ($allowedHeaderName === $headerName) {
-                        if ((string)$allowedHeaderValue === $headerValue) {
+                        if ((string) $allowedHeaderValue === $headerValue) {
                             $this->writeOkValue('  ' . $headerName . ': ' . $headerValue);
                         } else {
                             echo '  ' . $headerName . ': expected ';

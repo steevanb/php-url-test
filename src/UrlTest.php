@@ -250,19 +250,22 @@ class UrlTest
         foreach ($request->getHeaders() as $name => $value) {
             $headers[] = $name . ': ' . $value;
         }
-        curl_setopt_array($curl, [
-            CURLOPT_URL => $request->getUrl(),
-            CURLOPT_PORT => $request->getPort(),
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_CUSTOMREQUEST => $request->getMethod(),
-            CURLOPT_HEADER => true,
-            CURLOPT_HTTPHEADER => $headers,
-            CURLOPT_REFERER => $request->getReferer(),
-            CURLOPT_POSTFIELDS => $request->getPostData(),
-            CURLOPT_FOLLOWLOCATION => $request->isAllowRedirect(),
-            CURLOPT_TIMEOUT => $request->getTimeout(),
-            CURLOPT_USERAGENT => $request->getUserAgent()
-        ]);
+        curl_setopt_array(
+            $curl,
+            [
+                CURLOPT_URL => $request->getUrl(),
+                CURLOPT_PORT => $request->getPort(),
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST => $request->getMethod(),
+                CURLOPT_HEADER => true,
+                CURLOPT_HTTPHEADER => $headers,
+                CURLOPT_REFERER => $request->getReferer(),
+                CURLOPT_POSTFIELDS => $request->getPostData(),
+                CURLOPT_FOLLOWLOCATION => $request->isAllowRedirect(),
+                CURLOPT_TIMEOUT => $request->getTimeout(),
+                CURLOPT_USERAGENT => $request->getUserAgent()
+            ]
+        );
 
         return $this;
     }

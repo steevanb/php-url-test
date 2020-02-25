@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+
+set -e
+
+readonly PROJECT_DIRECTORY=$(realpath $(dirname $(realpath $0))/..)
+
+docker run \
+    -it \
+    --rm \
+    -v ${PROJECT_DIRECTORY}:/app:ro \
+    steevanb/composer-require-checker:2.1.0

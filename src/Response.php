@@ -204,14 +204,14 @@ class Response
         $this->header = $header;
         $this->headers = [];
         foreach (explode("\r\n", substr($header, stripos($header, "\r\n"))) as $line) {
-            if (empty($line)) {
+            if ($line === null || trim($line) === '') {
                 continue;
             }
             if (strpos($line, ':') === false) {
                 $this->headers[$line] = null;
                 continue;
             }
-            [$name, $value] = explode(": ", $line);
+            [$name, $value] = explode(': ', $line);
             $this->headers[$name] = $value;
         }
 

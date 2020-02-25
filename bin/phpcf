@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+
+set -e
+
+if [ $(which docker || false) ]; then
+    readonly PROJECT_DIRECTORY=$(realpath $(dirname $(realpath $0))/..)
+    docker run \
+        -it \
+        --rm \
+        -v ${PROJECT_DIRECTORY}:/var/repository:ro \
+        -w /var/repository \
+        steevanb/php-code-fixer:2.0.19 \
+        bin/phpcf
+else
+    phpcf --exclude=/vendor/ src
+fi
