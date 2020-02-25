@@ -1,3 +1,8 @@
+### [0.1.0](../../compare/0.0.17...0.1.0) - 2020-02-25
+
+- Add `src/` subdirectory for source code.
+- `docker/build.sh` use docker for Composer.
+
 ### [0.0.17](../../compare/0.0.16...0.0.17) - 2020-01-21
 
 - Replace parameters where it was missing:
