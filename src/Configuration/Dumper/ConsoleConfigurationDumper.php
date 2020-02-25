@@ -49,7 +49,7 @@ class ConsoleConfigurationDumper
             ->writeConfiguration($table, 'Port', $request->getPort())
             ->writeConfiguration($table, 'Method', $request->getMethod())
             ->writeRequestRedirectionConfiguration($table, $urlTest->getConfiguration())
-            ->writeHeadersConfiguration($table, 'Header', 'Headers',  $request->getHeaders())
+            ->writeHeadersConfiguration($table, 'Header', 'Headers', $request->getHeaders())
             ->writeConfiguration($table, 'User-argent', $request->getUserAgent())
             ->writeConfiguration($table, 'Referer', $request->getReferer())
             ->writeConfiguration($table, 'Timeout', $request->getTimeout());
@@ -72,7 +72,12 @@ class ConsoleConfigurationDumper
             ->writeConfiguration($table, 'Content type', $response->getContentType())
             ->writeConfiguration($table, 'Header size', $response->getHeaderSize())
             ->writeHeadersConfiguration($table, 'Allowed header', 'Allowed headers', $response->getHeaders())
-            ->writeHeadersConfiguration($table, 'Unallowed header', 'Unallowed headers', $response->getUnallowedHeaders())
+            ->writeHeadersConfiguration(
+                $table,
+                'Unallowed header',
+                'Unallowed headers',
+                $response->getUnallowedHeaders()
+            )
             ->writeConfiguration($table, 'Body size', $response->getBodySize())
             ->writeConfiguration($table, 'Body transformer', $response->getRealResponseBodyTransformerName())
             ->writeConfiguration($table, 'Body file name', $response->getRealResponseBodyFileName())
@@ -124,19 +129,21 @@ class ConsoleConfigurationDumper
     ): self {
         $index = 0;
         foreach ($configurations ?? [] as $configuration) {
-            $table->addRow([
-                $index === 0
-                    ? (count($configurations) === 1 ? $name : $pluralName)
-                    : null,
-                $configuration
-            ]);
+            $table->addRow(
+                [
+                    $index === 0
+                        ? (count($configurations) === 1 ? $name : $pluralName)
+                        : null,
+                    $configuration
+                ]
+            );
             $index++;
         }
 
         return $this;
     }
 
-    protected function writeHeadersConfiguration(Table $table, string $name, string $pluralName,?array $headers): self
+    protected function writeHeadersConfiguration(Table $table, string $name, string $pluralName, ?array $headers): self
     {
         $configurations = [];
         foreach ($headers ?? [] as $headerName => $headerValue) {
@@ -244,12 +251,14 @@ class ConsoleConfigurationDumper
             $table = new Table($this->output);
             $table->setHeaders(['', 'Id', 'Method', 'Url']);
             foreach ($urlTestService->getTests() as $index => $urlTest) {
-                $table->addRow([
-                    '#' . ($index + 1),
-                    $urlTest->getId(),
-                    $urlTest->getConfiguration()->getRequest()->getMethod(),
-                    $urlTest->getConfiguration()->getRequest()->getUrl()
-                ]);
+                $table->addRow(
+                    [
+                        '#' . ($index + 1),
+                        $urlTest->getId(),
+                        $urlTest->getConfiguration()->getRequest()->getMethod(),
+                        $urlTest->getConfiguration()->getRequest()->getUrl()
+                    ]
+                );
             }
             $table->render();
         }

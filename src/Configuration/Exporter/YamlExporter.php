@@ -14,7 +14,7 @@ class YamlExporter
     public function exportToFile(UrlTest $urlTest, string $fileName): self
     {
         if (file_put_contents($fileName, $this->export($urlTest)) === false) {
-            throw new \Exception('Error while exporting urltest "' . $urlTest->getId() . '" into "'. $fileName . '".');
+            throw new \Exception('Error while exporting urltest "' . $urlTest->getId() . '" into "' . $fileName . '".');
         }
 
         return $this;
