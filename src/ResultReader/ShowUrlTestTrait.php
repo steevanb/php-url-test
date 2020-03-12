@@ -10,6 +10,11 @@ trait ShowUrlTestTrait
 {
     protected function showUrlTest(UrlTest $urlTest, bool $showSuccess, bool $showError): bool
     {
-        return ($urlTest->isValid() && $showSuccess) || ($urlTest->isValid() === false && $showError);
+        return
+            $urlTest->isExecuted()
+            && (
+                ($urlTest->isValid() === true && $showSuccess === true)
+                || ($urlTest->isValid() === false && $showError === true)
+            );
     }
 }

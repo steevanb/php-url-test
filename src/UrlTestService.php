@@ -403,7 +403,7 @@ class UrlTestService
             if (is_readable($continueFilePath) === false) {
                 throw new \Exception(
                     'Continue file "' . $continueFilePath . '" does not exist or is not readable. '
-                    . 'Maybe your last tests was not stopped by a fail ?'
+                    . 'Maybe your last tests were not stopped by a fail?'
                 );
             }
             $this->continueData = require($continueFilePath);
