@@ -17,7 +17,7 @@ Tests all urls of your application
 Don't allow to update minor/bug fix versions, as we can break compatibility between bug fixes until final release.
 
 ```bash
-composer require --dev steevanb/php-url-test 0.0.17
+composer require --dev steevanb/php-url-test 0.1.1
 ```
 
 ## Use it with official Docker image
@@ -32,7 +32,7 @@ docker run \
     -e URLTEST_PARAMETERS="--ansi --configuration=/var/tests/urltest.yml -vvv" \
     # Allow this container to access host domains
     --net=host \
-    steevanb/php-url-test:0.0.17
+    steevanb/php-url-test:0.1.1
 ```
 
 ## Launch tests
