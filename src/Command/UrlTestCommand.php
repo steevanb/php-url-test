@@ -109,8 +109,8 @@ class UrlTestCommand extends Command
             if ($input->getOption('stop-on-error') && $service->hasContinueData()) {
                 $output->writeln('');
                 $output->writeln(
-                    "\e[43m\e[1;30m Tests stopped, use --continue to resume since last fail, "
-                    . "or --skip to resume after last fail. \e[00m"
+                    "\e[43m Tests stopped, use --continue to resume since last fail, "
+                    . "or --skip to resume after last fail. \e[0m"
                 );
             }
         }

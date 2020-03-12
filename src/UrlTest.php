@@ -175,7 +175,7 @@ class UrlTest
     {
         if ($this->valid === null) {
             if ($this->isExecuted() === false) {
-                throw new \Exception('Test is not executed.');
+                throw new \Exception('Test ' . $this->getId() . ' is not executed.');
             }
 
             $request = $this->getConfiguration()->getRequest();
