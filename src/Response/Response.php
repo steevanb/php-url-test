@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace steevanb\PhpUrlTest;
+namespace steevanb\PhpUrlTest\Response;
+
+use steevanb\PhpUrlTest\UrlTest;
 
 class Response
 {
@@ -63,8 +65,12 @@ class Response
     /** @var ?string */
     protected $errorMessage;
 
+    /** @var Event[] */
+    protected $triggeredEvents = [];
+
     public function __construct(
         UrlTest $urlTest,
+        array $triggeredEvents,
         $curl = null,
         ?string $response = null,
         ?int $time = null,
@@ -72,11 +78,12 @@ class Response
         ?string $errorMessage = null
     ) {
         $this->urlTest = $urlTest;
+        $this->triggeredEvents = $triggeredEvents;
         if (is_resource($curl)) {
             $this->time = $time;
             $this->code = curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
             $this->numConnects = curl_getinfo($curl, CURLINFO_NUM_CONNECTS);
-            $this->size = strlen($response);
+            $this->size = strlen($response ?? '');
             $this->contentType = curl_getinfo($curl, CURLINFO_CONTENT_TYPE);
             $this->connectTime = curl_getinfo($curl, CURLINFO_CONNECT_TIME);
             $this->preTranferTtime = curl_getinfo($curl, CURLINFO_PRETRANSFER_TIME);
@@ -88,10 +95,11 @@ class Response
             if ($this->headerSize > 0) {
                 $this->defineHeaders(substr($response, 0, $this->headerSize));
             }
-            $this->body = substr($response, $this->headerSize);
-            $this->bodySize = strlen($this->body);
+            if (is_string($response) === true) {
+                $this->body = substr($response, $this->headerSize);
+                $this->bodySize = strlen($this->body);
+            }
         }
-
         $this->errorCode = $errorCode;
         $this->errorMessage = $errorMessage;
     }
@@ -197,6 +205,18 @@ class Response
     public function getErrorMessage(): ?string
     {
         return $this->errorMessage;
+    }
+
+    /** @return array */
+    public function getTriggeredEvents(): array
+    {
+        return $this->triggeredEvents;
+    }
+
+    /** @return Event[] */
+    public function getTriggeredEventsByName(string $name): array
+    {
+        return $this->getTriggeredEvents()[$name] ?? [];
     }
 
     protected function defineHeaders(string $header): self

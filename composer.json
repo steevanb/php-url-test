@@ -15,7 +15,11 @@
         "steevanb/php-yaml": "^1.0",
         "symfony/console": "^3.2||^4.0",
         "symfony/options-resolver": "^3.2||^4.0",
-        "symfony/yaml": "^3.2||^4.0"
+        "symfony/yaml": "^3.2||^4.0",
+        "symfony/process": "^3.2||^4.0"
     },
-    "bin": ["bin/urltest"]
+    "bin": ["bin/urltest"],
+    "require-dev": {
+        "symfony/var-dumper": "^4.0"
+    }
 }
