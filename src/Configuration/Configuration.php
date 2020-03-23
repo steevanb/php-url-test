@@ -22,6 +22,16 @@ class Configuration
 
         $return->setPosition($configuration['position']);
 
+        foreach ($configuration['events'] as $name => $events) {
+            foreach ($events as $command) {
+                $return->addEvent(
+                    (new Event())
+                        ->setName($name)
+                        ->setCommand($command)
+                );
+            }
+        }
+
         $return
             ->getRequest()
             ->setUrl(static::replaceParameters($configuration['request']['url'], $parameters))
@@ -122,6 +132,8 @@ class Configuration
             ->setAllowedTypes('parent', ['null', 'string'])
             ->setDefault('position', null)
             ->setAllowedTypes('position', ['null', 'int', 'string'])
+            ->setDefault('events', [])
+            ->setAllowedTypes('events', ['null', 'array'])
             ->setDefault('request', [])
             ->setAllowedTypes('request', 'array')
             ->setDefault('expectedResponse', [])
@@ -129,6 +141,27 @@ class Configuration
             ->setDefault('response', [])
             ->setAllowedTypes('response', 'array');
         $data = $resolver->resolve($data);
+        if (is_null($data['events'])) {
+            $data['events'] = [];
+        }
+
+        $eventsResolver = new OptionsResolver();
+        $eventsResolver
+            ->setDefault(Event::EVENT_BEFORE_TEST, [])
+            ->setAllowedTypes(Event::EVENT_BEFORE_TEST, ['null', 'string', 'array'])
+            ->setDefault(Event::EVENT_AFTER_TEST, [])
+            ->setAllowedTypes(Event::EVENT_AFTER_TEST, ['null', 'string', 'array']);
+        $data['events'] = $eventsResolver->resolve($data['events']);
+        if (is_null($data['events'][Event::EVENT_BEFORE_TEST])) {
+            $data['events'][Event::EVENT_BEFORE_TEST] = [];
+        } elseif (is_string($data['events'][Event::EVENT_BEFORE_TEST])) {
+            $data['events'][Event::EVENT_BEFORE_TEST] = [$data['events'][Event::EVENT_BEFORE_TEST]];
+        }
+        if (is_null($data['events'][Event::EVENT_AFTER_TEST])) {
+            $data['events'][Event::EVENT_AFTER_TEST] = [];
+        } elseif (is_string($data['events'][Event::EVENT_AFTER_TEST])) {
+            $data['events'][Event::EVENT_AFTER_TEST] = [$data['events'][Event::EVENT_AFTER_TEST]];
+        }
 
         $requestResolver = new OptionsResolver();
         $requestResolver
@@ -354,6 +387,9 @@ class Configuration
     /** @var ?int */
     protected $position;
 
+    /** @var array */
+    protected $events = [];
+
     /** @var Request */
     protected $request;
 
@@ -388,6 +424,28 @@ class Configuration
     public function getPosition(): ?int
     {
         return $this->position;
+    }
+
+    public function addEvent(Event $event): self
+    {
+        if (array_key_exists($event->getName(), $this->events) === false) {
+            $this->events[$event->getName()] = [];
+        }
+        $this->events[$event->getName()][] = $event;
+
+        return $this;
+    }
+
+    /** @return array */
+    public function getEvents(): array
+    {
+        return $this->events;
+    }
+
+    /** @return Event[] */
+    public function getEventsByName(string $name): array
+    {
+        return $this->getEvents()[$name] ?? [];
     }
 
     public function getRequest(): Request

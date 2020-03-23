@@ -6,6 +6,7 @@ namespace steevanb\PhpUrlTest\Configuration\Dumper;
 
 use Symfony\Component\Console\{
     Helper\Table,
+    Helper\TableSeparator,
     Output\OutputInterface
 };
 use steevanb\PhpUrlTest\{
@@ -37,10 +38,47 @@ class ConsoleConfigurationDumper
 
     public function dumpUrlTest(UrlTest $urlTest): self
     {
-        $request = $urlTest->getConfiguration()->getRequest();
-        $response = $urlTest->getConfiguration()->getResponse();
+        $this
+            ->writeHeader('#' . $urlTest->getId())
+            ->dumpEvents($urlTest)
+            ->dumpRequest($urlTest)
+            ->dumpResponse($urlTest);
 
-        $this->writeHeader('#' . $urlTest->getId());
+        return $this;
+    }
+
+    protected function dumpEvents(UrlTest $urlTest): self
+    {
+        $eventsByName = $urlTest->getConfiguration()->getEvents();
+        if (count($eventsByName) === 0) {
+            return $this;
+        }
+
+        $table = new Table($this->output);
+        $table->setHeaders(['Event', 'Commands']);
+
+        $eventByNameIndex = 0;
+        foreach ($eventsByName as $name => $events) {
+            $firstEvent = array_shift($events);
+            $table->addRow([$name, $firstEvent->getCommand()]);
+            foreach ($events as $event) {
+                $table->addRow([null, $event->getCommand()]);
+            }
+
+            $eventByNameIndex++;
+            if ($eventByNameIndex < count($eventsByName)) {
+                $table->addRow(new TableSeparator());
+            }
+        }
+        $table->render();
+        $this->output->writeln('');
+
+        return $this;
+    }
+
+    protected function dumpRequest(UrlTest $urlTest): self
+    {
+        $request = $urlTest->getConfiguration()->getRequest();
 
         $table = new Table($this->output);
         $table->setHeaders(['Request', 'Value']);
@@ -60,6 +98,13 @@ class ConsoleConfigurationDumper
             $this->output->writeln('Request post data:');
             $this->output->writeln($request->getPostData());
         }
+
+        return $this;
+    }
+
+    protected function dumpResponse(UrlTest $urlTest): self
+    {
+        $response = $urlTest->getConfiguration()->getResponse();
 
         $this->output->writeln('');
         $table = new Table($this->output);

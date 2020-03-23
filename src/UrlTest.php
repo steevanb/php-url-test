@@ -6,9 +6,16 @@ namespace steevanb\PhpUrlTest;
 
 use steevanb\PhpUrlTest\{
     Configuration\Configuration,
+    Configuration\Event as ConfigurationEvent,
+    Response\Event as ResponseEvent,
+    Response\Response,
     ResponseBodyTransformer\ResponseBodyTransformerInterface,
     ResponseBodyTransformer\JsonResponseBodyTransformer,
     ResponseBodyTransformer\UuidResponseBodyTransformer
+};
+use Symfony\Component\Process\{
+    Exception\ProcessFailedException,
+    Process
 };
 
 class UrlTest
@@ -97,6 +104,15 @@ class UrlTest
 
     public function execute(): self
     {
+        $triggeredEvents = [
+            ConfigurationEvent::EVENT_BEFORE_TEST => [],
+            ConfigurationEvent::EVENT_AFTER_TEST => []
+        ];
+
+        if ($this->triggerEvents(ConfigurationEvent::EVENT_BEFORE_TEST, $triggeredEvents) === false) {
+            return $this;
+        }
+
         $curl = curl_init();
         $this->defineCurlOptions($curl);
 
@@ -107,49 +123,20 @@ class UrlTest
             $timeBeforeCall = microtime(true);
             $response = curl_exec($curl);
             $timeAfterCall = microtime(true);
-        } catch (\Exception $e) {
-            $this->response = new Response($this, null, null, null, null, $e->getMessage());
+        } catch (\Exception $exception) {
+            if ($this->triggerEvents(ConfigurationEvent::EVENT_AFTER_TEST, $triggeredEvents) === false) {
+                return $this;
+            }
+            $this->response = new Response($this, $triggeredEvents, null, null, null, null, $exception->getMessage());
+
+            return $this;
         }
 
-        if ($response === null) {
-            $this->response = new Response(
-                $this,
-                null,
-                null,
-                null,
-                null,
-                'Response should not be null.'
-            );
-        } elseif ($response === false) {
-            $this->response = new Response(
-                $this,
-                null,
-                null,
-                intval(($timeAfterCall - $timeBeforeCall) * 1000),
-                curl_errno($curl),
-                curl_error($curl)
-            );
-        } else {
-            $this->response = new Response($this, $curl, $response, intval(($timeAfterCall - $timeBeforeCall) * 1000));
-            if ($this->getConfiguration()->getResponse()->getRealResponseBodyFileName() !== null) {
-                file_put_contents(
-                    $this->getConfiguration()->getResponse()->getRealResponseBodyFileName(),
-                    $this->getTransformedBody(
-                        $this->getResponse()->getBody(),
-                        $this->getConfiguration()->getResponse()->getRealResponseBodyTransformerName()
-                    )
-                );
-            }
-            if ($this->getConfiguration()->getResponse()->getBodyFileName() !== null) {
-                file_put_contents(
-                    $this->getConfiguration()->getResponse()->getBodyFileName(),
-                    $this->getTransformedBody(
-                        $this->getConfiguration()->getResponse()->getBody(),
-                        $this->getConfiguration()->getResponse()->getBodyTransformerName()
-                    )
-                );
-            }
+        if ($this->triggerEvents(ConfigurationEvent::EVENT_AFTER_TEST, $triggeredEvents) === false) {
+            return $this;
         }
+
+        $this->parseCurlResponse($curl, $response, $triggeredEvents, $timeBeforeCall, $timeAfterCall);
 
         return $this;
     }
@@ -274,6 +261,102 @@ class UrlTest
     {
         if ($expected !== null && $expected !== $value) {
             $this->valid = false;
+        }
+
+        return $this;
+    }
+
+    protected function triggerEvents(string $name, array &$triggeredEvents): bool
+    {
+        try {
+            foreach ($this->getConfiguration()->getEventsByName($name) as $event) {
+                $event = new ResponseEvent(
+                    $name,
+                    $event->getCommand(),
+                    Process::fromShellCommandline($event->getCommand())
+                );
+                $triggeredEvents[$name][] = $event;
+                $event->getProcess()->mustRun();
+            }
+        } catch (ProcessFailedException $exception) {
+            $this->response = new Response(
+                $this,
+                $triggeredEvents,
+                null,
+                null,
+                null,
+                null,
+                'Error while running "'
+                    . $exception->getProcess()->getCommandLine()
+                    . '" on '
+                    . $name
+                    . ' event. Error: '
+                    . $exception->getProcess()->getErrorOutput()
+            );
+
+            return false;
+        } catch (\Throwable $exception) {
+            $this->response = new Response($this, $triggeredEvents, null, null, null, null, $exception->getMessage());
+
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function parseCurlResponse(
+        $curl,
+        $response,
+        array &$triggeredEvents,
+        float $timeBeforeCall,
+        ?float $timeAfterCall
+    ): self {
+        if ($response === null) {
+            $this->response = new Response(
+                $this,
+                $triggeredEvents,
+                null,
+                null,
+                null,
+                null,
+                'Response should not be null.'
+            );
+        } elseif ($response === false) {
+            $this->response = new Response(
+                $this,
+                $triggeredEvents,
+                null,
+                null,
+                intval(($timeAfterCall - $timeBeforeCall) * 1000),
+                curl_errno($curl),
+                curl_error($curl)
+            );
+        } else {
+            $this->response = new Response(
+                $this,
+                $triggeredEvents,
+                $curl,
+                $response,
+                intval(($timeAfterCall - $timeBeforeCall) * 1000)
+            );
+            if ($this->getConfiguration()->getResponse()->getRealResponseBodyFileName() !== null) {
+                file_put_contents(
+                    $this->getConfiguration()->getResponse()->getRealResponseBodyFileName(),
+                    $this->getTransformedBody(
+                        $this->getResponse()->getBody(),
+                        $this->getConfiguration()->getResponse()->getRealResponseBodyTransformerName()
+                    )
+                );
+            }
+            if ($this->getConfiguration()->getResponse()->getBodyFileName() !== null) {
+                file_put_contents(
+                    $this->getConfiguration()->getResponse()->getBodyFileName(),
+                    $this->getTransformedBody(
+                        $this->getConfiguration()->getResponse()->getBody(),
+                        $this->getConfiguration()->getResponse()->getBodyTransformerName()
+                    )
+                );
+            }
         }
 
         return $this;

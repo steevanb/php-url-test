@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace steevanb\PhpUrlTest\ResultReader;
 
-use steevanb\PhpUrlTest\UrlTest;
+use steevanb\PhpUrlTest\{
+    Configuration\Event,
+    UrlTest
+};
 
 class ConsoleResultReader implements ResultReaderInterface
 {
@@ -20,7 +23,10 @@ class ConsoleResultReader implements ResultReaderInterface
                         echo "\n";
                     }
 
-                    $this->writeResult($urlTest, $verbosity);
+                    $this
+                        ->writeResult($urlTest, $verbosity)
+                        ->writeEvents($urlTest, Event::EVENT_BEFORE_TEST, $verbosity)
+                        ->writeEvents($urlTest, Event::EVENT_AFTER_TEST, $verbosity);
 
                     if (is_string($urlTest->getResponse()->getErrorMessage())) {
                         continue;
@@ -338,6 +344,83 @@ class ConsoleResultReader implements ResultReaderInterface
             && $verbosity >= ResultReaderService::VERBOSITY_VERBOSE
         ) {
             echo "\e[31m" . $urlTest->getResponse()->getErrorMessage() . "\e[00m\n";
+        }
+
+        return $this;
+    }
+
+    protected function writeEvents(UrlTest $urlTest, string $eventName, int $verbosity): self
+    {
+        if ($verbosity >= ResultReaderService::VERBOSITY_VERBOSE) {
+            $events = $urlTest->getResponse()->getTriggeredEventsByName($eventName);
+            $expectedEvents = $urlTest->getConfiguration()->getEventsByName($eventName);
+            if (count($events) === 0) {
+                echo "Event $eventName: ";
+                if (count($expectedEvents) === 0) {
+                    $this->writeOkValue('none');
+                } else {
+                    $this->writeBadValue('none (' . count($expectedEvents) . ' expected)');
+                }
+                echo '.' . "\n";
+            } else {
+                echo "Event $eventName (";
+                $countOk = count($events);
+                if ($events[$countOk - 1]->getProcess()->getExitCode() !== 0) {
+                    $countOk--;
+                }
+                if ($countOk !== count($expectedEvents)) {
+                    $this->writeBadValue($countOk . '/' . count($expectedEvents));
+                } else {
+                    $this->writeOkValue($countOk . '/' . count($expectedEvents));
+                }
+                echo '):' . "\n";
+
+                foreach ($events as $event) {
+                    echo '  ' . $event->getCommand() . ':';
+                    if ($verbosity === ResultReaderService::VERBOSITY_VERBOSE) {
+                        if ($event->getProcess()->getExitCode() === 0) {
+                            $this->writeOkValue(' Ok');
+                        } else {
+                            $this->writeBadValue(' Fail (' . $event->getProcess()->getExitCode() . ')');
+                        }
+                        echo '.';
+                    } elseif ($verbosity >= ResultReaderService::VERBOSITY_VERY_VERBOSE) {
+                        echo "\n";
+                        echo '    Exit code: ';
+                        if ($event->getProcess()->getExitCode() === 0) {
+                            $this->writeOkValue($event->getProcess()->getExitCode());
+                        } else {
+                            $this->writeBadValue($event->getProcess()->getExitCode());
+                        }
+                        echo ".\n";
+
+                        $this
+                            ->writeProcessOutput($event->getProcess()->getOutput(), 'Output')
+                            ->writeProcessOutput($event->getProcess()->getErrorOutput(), 'Error output');
+                    }
+                    echo "\n";
+                }
+            }
+        }
+
+        return $this;
+    }
+
+    protected function writeProcessOutput(string $output, string $name): self
+    {
+        $outputLines = explode("\n", $output);
+        if (count($outputLines) > 0 && $outputLines[count($outputLines) - 1] === '') {
+            array_pop($outputLines);
+        }
+        $countOutputLines = count($outputLines);
+        if ($countOutputLines > 0) {
+            echo "    $name:\n";
+            foreach ($outputLines as $lineIndex => $line) {
+                echo "      $line";
+                if ($lineIndex < $countOutputLines - 1) {
+                    echo "\n";
+                }
+            }
         }
 
         return $this;
