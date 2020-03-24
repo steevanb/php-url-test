@@ -1,5 +1,5 @@
-[![version](https://img.shields.io/badge/alpha-0.0.17-red.svg)](https://github.com/steevanb/php-url-test/tree/0.0.17)
-![Lines](https://img.shields.io/badge/code%20lines-3800-green.svg)
+[![version](https://img.shields.io/badge/alpha-0.2.0-red.svg)](https://github.com/steevanb/php-url-test/tree/0.2.0)
+![Lines](https://img.shields.io/badge/code%20lines-4360-green.svg)
 ![Total Downloads](https://poser.pugx.org/steevanb/php-url-test/downloads)
 
 ## php-url-test
@@ -17,7 +17,7 @@ Tests all urls of your application
 Don't allow to update minor/bug fix versions, as we can break compatibility between bug fixes until final release.
 
 ```bash
-composer require --dev steevanb/php-url-test 0.1.1
+composer require --dev steevanb/php-url-test 0.2.*
 ```
 
 ## Use it with official Docker image
@@ -26,13 +26,13 @@ Instead of install it in your project with Composer, you can use official Docker
 
 ```bash
 docker run \
-    # Create a volume with your test configurations into /var/tests
-    -v /var/www/tests:/var/tests \
+    # Create a volume with your test configurations into /app
+    -v /var/www/tests:/app \
     # You can use `URLTEST_PARAMETERS` env variable to add parameters to `urltest` command.
-    -e URLTEST_PARAMETERS="--ansi --configuration=/var/tests/urltest.yml -vvv" \
+    -e URLTEST_PARAMETERS="--ansi --configuration=/app/urltest.yml -vvv" \
     # Allow this container to access host domains
     --net=host \
-    steevanb/php-url-test:0.1.1
+    steevanb/php-url-test:0.2.0
 ```
 
 ## Launch tests
@@ -109,14 +109,21 @@ Only _request.url_ is required.
 
 ```yaml
 testId:
-    # if abstract = true, this test will not be launched. you can use it as default configuration with parent: testId in another test
+    # If abstract = true, this test will not be launched. you can use it as default configuration with parent: testId in another test
     abstract: false
-    # id of parent default configuration
+    # Id of parent default configuration
     parent: ~
     # 0 is first. don't use negative numbers, it's used by UrlTest
     position: 0
+    events:
+        # Commands called before the test. it could be a string (for only one command) or an array of commands.
+        beforeTest:
+            - command
+        # Commands called after the test. it could be a string (for only one command) or an array of commands.
+        afterTest:
+            - commands
     request:
-        # you can use parameters (see above) to configure what you need
+        # You can use parameters (see above) to configure what you need
         url: '%domain%/foo'
         timeout: 30
         port: 80
@@ -124,7 +131,7 @@ testId:
         userAgent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36
         referer: http://referer.com
         allowRedirect: true
-        # list of headers to add to request
+        # List of headers to add to request
         headers:
             X-Foo: bar
     expectedResponse:
@@ -133,32 +140,32 @@ testId:
         size: 300
         contentType: text/html
         numConnects: 1
-        # set count if you know exaclty number of redirects you want to test, or min/max
+        # Set count if you know exaclty number of redirects you want to test, or min/max
         redirect:
             min: 1
             max: 1
             count: 1
         header:
             size: 200
-            # list of headers who has to exists, and have exaclty this value
+            # List of headers who has to exists, and have exaclty this value
             headers:
                 X-Foo: bar
-            # list of headers should not exists
+            # List of headers should not exists
             unallowedHeaders:
                 - X-Bar
         body:
-            # content to compare with response, <file($fileName)> will get content of $fileName
+            # Content to compare with response, <file($fileName)> will get content of $fileName
             content: <file('content.html')>
             size: 100
-            # transformer id : transform data from content key before comparing it to response
+            # Transformer id : transform data from content key before comparing it to response
             transformer: json
-            # file name where tranformed expected content will be saved, if you need to test your transformer for example
+            # File name where tranformed expected content will be saved, if you need to test your transformer for example
             fileName: /tmp/urlTestResult/expectedResponse.html
     response:
         body:
-            # transformer id : transform data from response body before comparing it to expected response
+            # Transformer id : transform data from response body before comparing it to expected response
             transformer: json
-            # file name where response body will be saved
+            # File name where response body will be saved
             fileName: /tmp/urlTestResult/response.html
 ```
 
