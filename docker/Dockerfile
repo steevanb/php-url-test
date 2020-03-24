@@ -1,10 +1,9 @@
-FROM php:7.3-cli-alpine3.10
-
-WORKDIR /var/urltest
+FROM php:7.4.3-cli-alpine3.11
 
 COPY . /var/urltest
 
-COPY docker/entrypoint.sh /var/entrypoint.sh
-RUN chmod +x /var/entrypoint.sh
+COPY docker/entrypoint /usr/local/bin/entrypoint
+RUN chmod +x /usr/local/bin/entrypoint
 
-ENTRYPOINT ["/var/entrypoint.sh"]
+WORKDIR /app
+ENTRYPOINT ["entrypoint"]

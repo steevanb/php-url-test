@@ -1,3 +1,7 @@
+### [0.2.0](../../compare/0.1.1...0.2.0) - 2020-03-24
+
+- Add `beforeTest` and `afterTest` events.
+
 ### [0.1.1](../../compare/0.0.1...0.1.1) - 2020-03-12
 
 - Fix `--stop-on-error` exception `Test is not executed`.

@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+set -e
+
+readonly PROJECT_DIR=$(realpath $(dirname $(realpath $0))/..)
+readonly URLTEST_VERSION="0.2.0"
+
+docker \
+    run \
+    --rm \
+    --interactive \
+    --tty \
+    --volume ${PROJECT_DIR}:/app \
+    --user $(id -u):$(id -g) \
+    composer install --no-dev --classmap-authoritative
+
+docker \
+    build \
+    --file=${PROJECT_DIR}/docker/Dockerfile \
+    -t steevanb/php-url-test:${URLTEST_VERSION} \
+    $PROJECT_DIR
+
+docker \
+    run \
+    --rm \
+    --interactive \
+    --tty \
+    --volume ${PROJECT_DIR}:/app \
+    --user $(id -u):$(id -g) \
+    composer install
+
+if [ "$1" == "--push" ]; then
+    docker logout
+    docker login --username=steevanb
+    docker push steevanb/php-url-test:${URLTEST_VERSION}
+fi
