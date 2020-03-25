@@ -1,3 +1,7 @@
+### [0.2.0](../../compare/0.2.0...0.2.1) - 2020-03-25
+
+- Add bash into Docker image.
+
 ### [0.2.0](../../compare/0.1.1...0.2.0) - 2020-03-24
 
 - Add `beforeTest` and `afterTest` events.
