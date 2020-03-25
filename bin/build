@@ -3,7 +3,7 @@
 set -e
 
 readonly PROJECT_DIR=$(realpath $(dirname $(realpath $0))/..)
-readonly URLTEST_VERSION="0.2.0"
+readonly URLTEST_VERSION="0.2.1"
 
 docker \
     run \
