@@ -16,7 +16,8 @@
         "symfony/console": "^3.2||^4.0",
         "symfony/options-resolver": "^3.2||^4.0",
         "symfony/yaml": "^3.2||^4.0",
-        "symfony/process": "^3.2||^4.0"
+        "symfony/process": "^3.2||^4.0",
+        "symfony/filesystem": "^3.2||^4.0"
     },
     "bin": ["bin/urltest"],
     "require-dev": {

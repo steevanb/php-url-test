@@ -1,4 +1,4 @@
-[![version](https://img.shields.io/badge/alpha-0.2.1-red.svg)](https://github.com/steevanb/php-url-test/tree/0.2.1)
+[![version](https://img.shields.io/badge/alpha-0.3.0-red.svg)](https://github.com/steevanb/php-url-test/tree/0.3.0)
 ![Lines](https://img.shields.io/badge/code%20lines-4387-green.svg)
 ![Total Downloads](https://poser.pugx.org/steevanb/php-url-test/downloads)
 
@@ -17,7 +17,7 @@ Tests all urls of your application
 Don't allow to update minor/bug fix versions, as we can break compatibility between bug fixes until final release.
 
 ```bash
-composer require --dev steevanb/php-url-test 0.2.*
+composer require --dev steevanb/php-url-test 0.3.*
 ```
 
 ## Use it with official Docker image
@@ -32,7 +32,7 @@ docker run \
     -e URLTEST_PARAMETERS="--ansi --configuration=/app/urltest.yml -vvv" \
     # Allow this container to access host domains
     --net=host \
-    steevanb/php-url-test:0.2.1
+    steevanb/php-url-test:0.3.0
 ```
 
 ## Launch tests
@@ -88,6 +88,12 @@ vendor/bin/urltest tests/ --stop-on-error --continue
 
 # used with --continue, skip last fail test, and continue testing after this one (do not re-test previous ones)
 vendor/bin/urltest tests/ --skip
+```
+
+## Change directory where UrlTest could write files
+
+```bash
+vendor/bin/urltest tests/ --var-path=/foo
 ```
 
 ## Dump configuration
