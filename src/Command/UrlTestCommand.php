@@ -65,6 +65,7 @@ class UrlTestCommand extends Command
             ->addOption('recursive', 'r', InputOption::VALUE_OPTIONAL, 'Set recursive if path is a directory.', 'true')
             ->addOption('stop-on-error', null, InputOption::VALUE_NONE, 'Stop when a test fail.')
             ->addOption('continue', null, InputOption::VALUE_NONE, 'Start since last fail test.')
+            ->addOption('var-path', null, InputOption::VALUE_REQUIRED, 'Path where UrlTest could write files.')
             ->addOption('skip', null, InputOption::VALUE_NONE, 'Skip last fail test, use it with --continue.')
             ->addArgument('path', InputArgument::REQUIRED, 'Configuration file name, or directories separated by ",".')
             ->addArgument('ids', InputArgument::OPTIONAL, 'UrlTest identifiers preg pattern to test.');
@@ -81,6 +82,12 @@ class UrlTestCommand extends Command
             )
             ->setStopOnError($input->getOption('stop-on-error'))
             ->setContinue($input->getOption('continue'), $input->getOption('skip'));
+
+        $varPath = $input->getOption('var-path');
+        if (is_string($varPath) === true) {
+            $service->setVarPath($varPath);
+        }
+
         if ($input->getOption('parallel') > 1) {
             $service
                 ->setParallelNumber((int) $input->getOption('parallel'))

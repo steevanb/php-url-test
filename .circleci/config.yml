@@ -32,7 +32,7 @@ jobs:
 
     phpcf:
         docker:
-            - image: steevanb/php-code-fixer:2.0.19
+            - image: steevanb/php-code-fixer:2.0.23
         working_directory: /var/repository
         steps:
             - checkout

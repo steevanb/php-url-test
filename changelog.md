@@ -1,3 +1,7 @@
+### [0.3.0](../../compare/0.3.0...0.2.1) - 2020-04-09
+
+- Add `--var-path` option to `urltest:test` command.
+
 ### [0.2.1](../../compare/0.2.0...0.2.1) - 2020-03-25
 
 - Add bash into Docker image.

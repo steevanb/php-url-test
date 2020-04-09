@@ -9,6 +9,7 @@ use steevanb\PhpUrlTest\{
     Configuration\Configuration
 };
 use steevanb\PhpYaml\Parser;
+use Symfony\Component\Filesystem\Filesystem;
 
 class UrlTestService
 {
@@ -53,6 +54,14 @@ class UrlTestService
 
     /** @var array */
     protected $parameters = [];
+
+    /** @var string */
+    protected $varPath;
+
+    public function __construct()
+    {
+        $this->varPath = sys_get_temp_dir();
+    }
 
     public function addConfigurationFile(string $fileName): self
     {
@@ -132,6 +141,18 @@ class UrlTestService
         $this->addTestDirectoryAndRegisterDirectory(realpath($directory), $recursive);
 
         return $this;
+    }
+
+    public function setVarPath(string $directory): self
+    {
+        $this->varPath = $directory;
+
+        return $this;
+    }
+
+    public function getVarPath(): string
+    {
+        return $this->varPath;
     }
 
     public function addTestFile(string $fileName): self
@@ -475,6 +496,9 @@ class UrlTestService
     public function executeTests(array $ids = null): bool
     {
         $continueFilePath = $this->getContinueFilePath();
+        if (is_dir(dirname($continueFilePath)) === false) {
+            (new Filesystem())->mkdir(dirname($continueFilePath));
+        }
         if (file_exists($continueFilePath)) {
             unlink($continueFilePath);
         }
@@ -718,7 +742,7 @@ class UrlTestService
 
     protected function getContinueFilePath(): string
     {
-        return sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'urltest.continue';
+        return $this->getVarPath() . DIRECTORY_SEPARATOR . 'urltest.continue';
     }
 
     protected function addResponseBodyTransformer(?string $bodyTransformer, UrlTest $urlTest): self

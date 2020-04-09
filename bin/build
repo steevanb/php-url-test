@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-set -e
+set -eu
 
 readonly PROJECT_DIR=$(realpath $(dirname $(realpath $0))/..)
-readonly URLTEST_VERSION="0.2.1"
+readonly URLTEST_VERSION="0.3.0"
 
 docker \
     run \

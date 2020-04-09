@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-set -e
+set -eu
 
 if [ $(which docker || false) ]; then
     readonly PROJECT_DIRECTORY=$(realpath $(dirname $(realpath $0))/..)
