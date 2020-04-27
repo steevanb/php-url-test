@@ -1,4 +1,8 @@
-### [0.3.0](../../compare/0.3.0...0.2.1) - 2020-04-09
+### [0.3.1](../../compare/0.3.0...0.3.1) - 2020-04-27
+
+- Fix `--continue` when used with `--var-path`.
+
+### [0.3.0](../../compare/0.2.1...0.3.0) - 2020-04-09
 
 - Add `--var-path` option to `urltest:test` command.
 
