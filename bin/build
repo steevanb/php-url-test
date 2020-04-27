@@ -2,35 +2,76 @@
 
 set -eu
 
-readonly PROJECT_DIR=$(realpath $(dirname $(realpath $0))/..)
-readonly URLTEST_VERSION="0.3.0"
+readonly ROOT_DIR=$(realpath $(dirname $(realpath $0))/..)
+readonly DOCKER_IMAGE_NAME="steevanb/php-url-test:0.3.0"
+OUTPUT_REDIRECT="/tmp/php-url-test.build.log"
 
+function rmOutputRedirectFile() {
+    if [ -f "${OUTPUT_REDIRECT}" ]; then
+        rm "${OUTPUT_REDIRECT}";
+    fi
+}
+
+function onError() {
+    if [ -f "${OUTPUT_REDIRECT}" ]; then
+        cat "${OUTPUT_REDIRECT}"
+        rmOutputRedirectFile
+    fi
+
+    echo -e "\e[41m Error, build canceled. \e[0m"
+}
+
+dockerQuiet="-q"
+dockerNoCache=""
+push=false
+for param in "$@"; do
+    if [ "${param}" == "-v" ]; then
+        dockerQuiet=""
+        OUTPUT_REDIRECT="/proc/self/fd/0"
+    elif [ "${param}" == "--no-cache" ]; then
+        dockerNoCache="--no-cache"
+    elif [ "${param}" == "--push" ]; then
+        push=true
+    fi
+done
+
+echo -e "Install \e[32mprod\e[0m dependencies."
 docker \
     run \
     --rm \
     --interactive \
     --tty \
-    --volume ${PROJECT_DIR}:/app \
+    --volume ${ROOT_DIR}:/app \
     --user $(id -u):$(id -g) \
-    composer install --no-dev --classmap-authoritative
+    composer install --no-dev --classmap-authoritative \
+     > ${OUTPUT_REDIRECT} 2>&1
 
+echo -e "Build Docker image \e[32m${DOCKER_IMAGE_NAME}\e[0m."
 docker \
     build \
-    --file=${PROJECT_DIR}/docker/Dockerfile \
-    -t steevanb/php-url-test:${URLTEST_VERSION} \
-    $PROJECT_DIR
+    --file=${ROOT_DIR}/docker/Dockerfile \
+    -t ${DOCKER_IMAGE_NAME} \
+    ${ROOT_DIR} \
+    ${dockerQuiet} \
+    ${dockerNoCache} \
+     > ${OUTPUT_REDIRECT} 2>&1
 
+echo -e "Install \e[32mdev\e[0m dependencies."
 docker \
     run \
     --rm \
     --interactive \
     --tty \
-    --volume ${PROJECT_DIR}:/app \
+    --volume ${ROOT_DIR}:/app \
     --user $(id -u):$(id -g) \
-    composer install
+    composer install \
+     > ${OUTPUT_REDIRECT} 2>&1
 
-if [ "$1" == "--push" ]; then
+if [ ${push} == true ]; then
+    echo -e "Login to \e[32mdockerhub\e[0m."
     docker logout
     docker login --username=steevanb
-    docker push steevanb/php-url-test:${URLTEST_VERSION}
+
+    echo -e "Push image \e[32m${DOCKER_IMAGE_NAME}\e[0m to \e[32mdockerhub\e[0m."
+    docker push ${DOCKER_IMAGE_NAME} > ${OUTPUT_REDIRECT} 2>&1
 fi

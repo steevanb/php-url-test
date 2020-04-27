@@ -74,19 +74,20 @@ class UrlTestCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $ids = $input->getArgument('ids') === null ? null : explode(',', $input->getArgument('ids'));
-        $service = $this
-            ->createUrlTestService(
-                $input->getArgument('path'),
-                $input->getOption('recursive') === 'true',
-                $input->getOption('configuration')
-            )
-            ->setStopOnError($input->getOption('stop-on-error'))
-            ->setContinue($input->getOption('continue'), $input->getOption('skip'));
+        $service = $this->createUrlTestService(
+            $input->getArgument('path'),
+            $input->getOption('recursive') === 'true',
+            $input->getOption('configuration')
+        );
 
         $varPath = $input->getOption('var-path');
         if (is_string($varPath) === true) {
             $service->setVarPath($varPath);
         }
+
+        $service
+            ->setStopOnError($input->getOption('stop-on-error'))
+            ->setContinue($input->getOption('continue'), $input->getOption('skip'));
 
         if ($input->getOption('parallel') > 1) {
             $service
