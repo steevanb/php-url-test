@@ -1,5 +1,5 @@
-[![version](https://img.shields.io/badge/alpha-0.3.0-red.svg)](https://github.com/steevanb/php-url-test/tree/0.3.0)
-![Lines](https://img.shields.io/badge/code%20lines-4387-green.svg)
+[![version](https://img.shields.io/badge/alpha-0.3.1-red.svg)](https://github.com/steevanb/php-url-test/tree/0.3.1)
+![Lines](https://img.shields.io/badge/code%20lines-4475-green.svg)
 ![Total Downloads](https://poser.pugx.org/steevanb/php-url-test/downloads)
 
 ## php-url-test
@@ -32,7 +32,7 @@ docker run \
     -e URLTEST_PARAMETERS="--ansi --configuration=/app/urltest.yml -vvv" \
     # Allow this container to access host domains
     --net=host \
-    steevanb/php-url-test:0.3.0
+    steevanb/php-url-test:0.3.1
 ```
 
 ## Launch tests
