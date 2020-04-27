@@ -419,7 +419,7 @@ class UrlTestService
             }
         }
 
-        if ($continue) {
+        if ($continue === true) {
             $continueFilePath = $this->getContinueFilePath();
             if (is_readable($continueFilePath) === false) {
                 throw new \Exception(
