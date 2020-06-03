@@ -105,7 +105,7 @@ class Configuration
         if ($data !== null) {
             foreach ($parameters as $name => $value) {
                 if (is_array($data)) {
-                    foreach ($data as $returnKey => $returnValue) {
+                    foreach ($return as $returnKey => $returnValue) {
                         $return[$returnKey] = str_replace('%' . $name . '%', $value, $returnValue);
                     }
                 } else {

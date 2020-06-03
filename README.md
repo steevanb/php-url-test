@@ -1,5 +1,5 @@
-[![version](https://img.shields.io/badge/alpha-0.3.1-red.svg)](https://github.com/steevanb/php-url-test/tree/0.3.1)
-![Lines](https://img.shields.io/badge/code%20lines-4475-green.svg)
+[![version](https://img.shields.io/badge/alpha-0.3.2-red.svg)](https://github.com/steevanb/php-url-test/tree/0.3.2)
+![Lines](https://img.shields.io/badge/code%20lines-4479-green.svg)
 ![Total Downloads](https://poser.pugx.org/steevanb/php-url-test/downloads)
 
 ## php-url-test
