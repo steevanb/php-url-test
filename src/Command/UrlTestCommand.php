@@ -87,7 +87,7 @@ class UrlTestCommand extends Command
 
         $service
             ->setStopOnError($input->getOption('stop-on-error'))
-            ->setContinue($input->getOption('continue'), $input->getOption('skip'));
+            ->setContinue($output, $input->getOption('continue'), $input->getOption('skip'));
 
         if ($input->getOption('parallel') > 1) {
             $service

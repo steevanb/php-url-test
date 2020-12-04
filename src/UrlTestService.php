@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace steevanb\PhpUrlTest;
 
+use Symfony\Component\Console\Output\OutputInterface;
 use steevanb\PhpUrlTest\{
     Configuration\Exporter\YamlExporter,
     Configuration\Configuration
@@ -409,25 +410,19 @@ class UrlTestService
         return $this->onProgressCallback;
     }
 
-    public function setContinue(bool $continue = true, bool $skip = false): self
+    public function setContinue(OutputInterface $output, bool $continue = true, bool $skip = false): self
     {
         foreach ($this->getTests() as $urlTest) {
             if ($urlTest->isExecuted()) {
                 throw new \Exception(
-                    'Can\'t change continue because test "' . $urlTest->getId() . '" is alreayd executed.'
+                    'Can\'t change continue because test "' . $urlTest->getId() . '" is already executed.'
                 );
             }
         }
 
-        if ($continue === true) {
-            $continueFilePath = $this->getContinueFilePath();
-            if (is_readable($continueFilePath) === false) {
-                throw new \Exception(
-                    'Continue file "' . $continueFilePath . '" does not exist or is not readable. '
-                    . 'Maybe your last tests were not stopped by a fail?'
-                );
-            }
-            $this->continueData = require($continueFilePath);
+        if ($continue === true && is_readable($this->getContinueFilePath()) === true) {
+
+            $this->continueData = require($this->getContinueFilePath());
 
             foreach ($this->continueData['skipped'] as $id) {
                 if (count($this->getTests([$id])) === 0) {
@@ -456,6 +451,15 @@ class UrlTestService
                 $this->addSkippedTest($this->continueData['current']);
             }
         } else {
+            if ($continue === true) {
+                $continueFilePath = $this->getContinueFilePath();
+                $output->writeln('');
+                $output->writeln(
+                    "\e[43m Continue file \"$continueFilePath\" does not exist or is not readable."
+                    . " Option --continue has been ignored. \e[0m"
+                );
+                $output->writeln('');
+            }
             $this->continueData = ['skipped' => [], 'success' => [], 'failed' => [], 'current' => null];
             foreach ($this->getSuccessTests() as $urlTest) {
                 $urlTest->setValid(null);
