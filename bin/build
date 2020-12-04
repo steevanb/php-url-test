@@ -3,7 +3,7 @@
 set -eu
 
 readonly ROOT_DIR=$(realpath $(dirname $(realpath $0))/..)
-readonly DOCKER_IMAGE_NAME="steevanb/php-url-test:0.3.1"
+readonly DOCKER_IMAGE_NAME="steevanb/php-url-test:0.3.3"
 OUTPUT_REDIRECT="/tmp/php-url-test.build.log"
 
 function rmOutputRedirectFile() {

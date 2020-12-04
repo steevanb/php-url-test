@@ -32,7 +32,7 @@ docker run \
     -e URLTEST_PARAMETERS="--ansi --configuration=/app/urltest.yml -vvv" \
     # Allow this container to access host domains
     --net=host \
-    steevanb/php-url-test:0.3.1
+    steevanb/php-url-test:0.3.3
 ```
 
 ## Launch tests
