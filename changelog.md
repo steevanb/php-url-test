@@ -1,3 +1,7 @@
+### [0.3.3](../../compare/0.3.2...0.3.3) - 2020-12-09
+
+- [Julien de Farcy](https://github.com/Julien-de-Farcy) Fix --continue
+
 ### [0.3.2](../../compare/0.3.1...0.3.2) - 2020-06-03
 
 - Fix parameters replacement with array configuration.
