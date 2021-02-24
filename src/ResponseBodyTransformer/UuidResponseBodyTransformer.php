@@ -31,7 +31,7 @@ class UuidResponseBodyTransformer implements ResponseBodyTransformerInterface
         } elseif (
             is_string($data)
             && strlen($data) === 36
-            && is_int(preg_match('/^[0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-f]{12}$/', $data))
+            && preg_match('/^[0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-f]{12}$/', $data) === 1
         ) {
             $data = '____UUID____';
         }
